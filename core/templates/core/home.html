@@ -1,0 +1,11 @@
+{# Esta pagina hereda toda la estructura de base.html (html, head, navbar, footer) #}
+{% extends "core/base.html" %}
+
+{# Sobreescribe el titulo del <title> en el <head> #}
+{% block titulo %}Inicio - Control de Ingresos y Gastos{% endblock %}
+
+{# Todo lo que va aqui aparece dentro del <main> de base.html #}
+{% block contenido %}
+<h1>Bienvenido</h1>
+<p>Sistema de control de ingresos y gastos.</p>
+{% endblock %}
