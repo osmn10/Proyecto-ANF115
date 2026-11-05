@@ -1,10 +1,13 @@
-<aside id="sidebar" class="d-flex flex-column" style="min-width: 240px; max-width: 240px; background-color: #1e2d3d; min-height: 100vh;">
+<aside id="sidebar" class="d-flex flex-column" style="min-width: 240px; max-width: 240px; min-height: 100vh;">
 
     {# Marca del sistema + botón de colapso #}
     <div class="px-3 py-3 d-flex align-items-center justify-content-between" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
         <a href="{% url 'core:home' %}" class="text-white text-decoration-none d-flex align-items-center gap-2 overflow-hidden">
-            <i class="bi bi-cash-coin fs-5 text-info flex-shrink-0"></i>
-            <span class="fw-semibold sidebar-label text-truncate" style="font-size: 0.95rem;">Ingresos y Gastos</span>
+            <span class="marca-icono flex-shrink-0"><i class="bi bi-journal-text"></i></span>
+            <span class="sidebar-label overflow-hidden">
+                <span class="marca-nombre d-block text-truncate">Ingresos y Gastos</span>
+                <span class="marca-detalle d-block">Proyecto ANF115</span>
+            </span>
         </a>
         <button id="sidebar-toggle"
                 class="btn btn-sm d-flex align-items-center justify-content-center flex-shrink-0 ms-1"
@@ -20,7 +23,7 @@
 
             <li class="nav-item">
                 <a href="{% url 'core:home' %}"
-                   class="nav-link sidebar-link d-flex align-items-center gap-2 rounded px-3 py-2"
+                   class="nav-link sidebar-link{% if request.resolver_match.url_name == 'home' %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
                    title="Inicio">
                     <i class="bi bi-speedometer2 flex-shrink-0"></i>
                     <span class="sidebar-label">Inicio</span>
@@ -36,7 +39,7 @@
             {% if perms.seguridad.view_usuario %}
             <li class="nav-item">
                 <a href="{% url 'seguridad:lista_usuarios' %}"
-                   class="nav-link sidebar-link d-flex align-items-center gap-2 rounded px-3 py-2"
+                   class="nav-link sidebar-link{% if '/seguridad/usuarios/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
                    title="Usuarios">
                     <i class="bi bi-people flex-shrink-0"></i>
                     <span class="sidebar-label">Usuarios</span>
@@ -47,7 +50,7 @@
             {% if perms.auth.view_group %}
             <li class="nav-item">
                 <a href="{% url 'seguridad:lista_roles' %}"
-                   class="nav-link sidebar-link d-flex align-items-center gap-2 rounded px-3 py-2"
+                   class="nav-link sidebar-link{% if '/seguridad/roles/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
                    title="Roles">
                     <i class="bi bi-shield-lock flex-shrink-0"></i>
                     <span class="sidebar-label">Roles</span>

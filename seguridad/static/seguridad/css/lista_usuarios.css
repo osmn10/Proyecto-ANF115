@@ -6,7 +6,7 @@
 
 /* Color sólido para evitar que el fondo claro de la página se transparente */
 .table-dark th.col-sort:hover {
-    background-color: #343a40 !important;
+    background-color: #edf1ef !important;
 }
 
 .sort-icon {

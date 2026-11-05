@@ -1,4 +1,4 @@
-{# Esta pagina hereda toda la estructura de base.html (html, head, navbar, footer) #}
+{# Esta pagina hereda toda la estructura de base.html (html, head, sidebar) #}
 {% extends "core/base.html" %}
 
 {# Sobreescribe el titulo del <title> en el <head> #}
@@ -6,6 +6,130 @@
 
 {# Todo lo que va aqui aparece dentro del <main> de base.html #}
 {% block contenido %}
-<h1>Bienvenido</h1>
-<p>Sistema de control de ingresos y gastos.</p>
+
+<div class="encabezado-pagina d-flex flex-wrap justify-content-between align-items-end gap-2">
+    <div>
+        <div class="antetitulo mb-1">Panel general</div>
+        <h4 class="mb-0 fw-semibold">Bienvenido{% if user.first_name %}, {{ user.first_name }}{% endif %}</h4>
+    </div>
+    <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{% now "j \d\e F \d\e Y" %}</span>
+</div>
+
+{# Indicadores del periodo: se calcularan cuando existan los modulos de Ingresos y Gastos #}
+<div class="row g-3 mb-2">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm indicador ingreso h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="etiqueta">Ingresos totales</span>
+                    <span class="icono"><i class="bi bi-arrow-down-left"></i></span>
+                </div>
+                <div class="valor cifra">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm indicador gasto h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="etiqueta">Gastos totales</span>
+                    <span class="icono"><i class="bi bi-arrow-up-right"></i></span>
+                </div>
+                <div class="valor cifra">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm indicador resultado h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="etiqueta">Resultado financiero</span>
+                    <span class="icono"><i class="bi bi-calculator"></i></span>
+                </div>
+                <div class="valor cifra">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm indicador porcentaje h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="etiqueta">Porcentaje de gastos</span>
+                    <span class="icono"><i class="bi bi-percent"></i></span>
+                </div>
+                <div class="valor cifra">—</div>
+            </div>
+        </div>
+    </div>
+</div>
+<p class="text-muted small mb-4">
+    <i class="bi bi-info-circle me-1"></i>
+    Los indicadores se mostrarán cuando estén disponibles los módulos de Ingresos y Gastos.
+</p>
+
+{# Modulos del sistema y su estado #}
+<h6 class="fw-semibold mb-3" style="color: var(--ig-tinta);">Módulos del sistema</h6>
+<div class="row g-3">
+    <div class="col-md-6 col-xl-4">
+        <div class="modulo">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="codigo">M1</span>
+                <span class="badge estado-disponible">Disponible</span>
+            </div>
+            <div class="fw-semibold">Usuarios</div>
+            <small class="text-muted">Cuentas y roles de acceso.</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <div class="modulo">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="codigo">M2</span>
+                <span class="badge estado-pendiente">En desarrollo</span>
+            </div>
+            <div class="fw-semibold">Ingresos</div>
+            <small class="text-muted">Registro y consulta de entradas.</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <div class="modulo">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="codigo">M3</span>
+                <span class="badge estado-pendiente">En desarrollo</span>
+            </div>
+            <div class="fw-semibold">Gastos</div>
+            <small class="text-muted">Registro y consulta de salidas.</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <div class="modulo">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="codigo">M4</span>
+                <span class="badge estado-pendiente">En desarrollo</span>
+            </div>
+            <div class="fw-semibold">Categorías</div>
+            <small class="text-muted">Clasificación de ingresos y gastos.</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <div class="modulo">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="codigo">M5 · M6</span>
+                <span class="badge estado-pendiente">En desarrollo</span>
+            </div>
+            <div class="fw-semibold">Panel financiero y reportes</div>
+            <small class="text-muted">Resultados diarios, mensuales y anuales.</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+        <div class="modulo">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="codigo">M7</span>
+                <span class="badge estado-pendiente">En desarrollo</span>
+            </div>
+            <div class="fw-semibold">Bitácora</div>
+            <small class="text-muted">Registro de acciones relevantes.</small>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

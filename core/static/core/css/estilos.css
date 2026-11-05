@@ -1,5 +1,253 @@
 /* Estilos personalizados del sistema */
 
+/* ══════════════════════════════════════════════════════════════════════
+   Tema visual: Control de Ingresos y Gastos
+   Paleta sobria de tipo contable. Los colores se definen una sola vez
+   aqui y se reutilizan en todo el sistema.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* Marca */
+    --ig-tinta: #0d2b33;            /* fondo del sidebar y panel del login */
+    --ig-tinta-2: #12363f;
+    --ig-primario: #0f6b5c;         /* verde contable: acciones principales */
+    --ig-primario-oscuro: #0b5649;
+    --ig-primario-rgb: 15, 107, 92;
+    --ig-dorado: #c9a54a;           /* acento de la marca */
+
+    /* Semantica financiera */
+    --ig-ingreso: #157347;
+    --ig-gasto: #b42318;
+    --ig-resultado: #1d4f91;
+
+    /* Superficies y texto */
+    --ig-fondo: #f3f5f4;
+    --ig-borde: #dde3e1;
+    --ig-texto: #1b2a2c;
+    --ig-texto-suave: #5f6f70;
+
+    /* Bootstrap */
+    --bs-body-font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --bs-body-color: var(--ig-texto);
+    --bs-primary: var(--ig-primario);
+    --bs-primary-rgb: var(--ig-primario-rgb);
+    --bs-link-color: var(--ig-primario);
+    --bs-link-color-rgb: var(--ig-primario-rgb);
+    --bs-link-hover-color: var(--ig-primario-oscuro);
+    --bs-link-hover-color-rgb: 11, 86, 73;
+    --bs-border-color: var(--ig-borde);
+    --bs-secondary-color: var(--ig-texto-suave);
+    --bs-border-radius: 0.45rem;
+    --bs-focus-ring-color: rgba(var(--ig-primario-rgb), 0.2);
+}
+
+body {
+    background-color: var(--ig-fondo);
+    -webkit-font-smoothing: antialiased;
+}
+
+.bg-light {
+    background-color: var(--ig-fondo) !important;
+}
+
+/* Cifras: numeros alineados en columnas, como en un libro contable */
+.cifra,
+.table td,
+.tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+.cifra {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: -0.01em;
+}
+
+/* ── Encabezados de pagina ── */
+
+main h4.fw-semibold,
+main h3.fw-semibold {
+    color: var(--ig-tinta);
+    letter-spacing: -0.01em;
+}
+
+.encabezado-pagina {
+    border-bottom: 1px solid var(--ig-borde);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.encabezado-pagina .antetitulo {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ig-primario);
+}
+
+/* ── Botones ── */
+
+.btn-primary {
+    --bs-btn-bg: var(--ig-primario);
+    --bs-btn-border-color: var(--ig-primario);
+    --bs-btn-hover-bg: var(--ig-primario-oscuro);
+    --bs-btn-hover-border-color: var(--ig-primario-oscuro);
+    --bs-btn-active-bg: var(--ig-primario-oscuro);
+    --bs-btn-active-border-color: var(--ig-primario-oscuro);
+    --bs-btn-disabled-bg: var(--ig-primario);
+    --bs-btn-disabled-border-color: var(--ig-primario);
+    --bs-btn-focus-shadow-rgb: var(--ig-primario-rgb);
+    font-weight: 500;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--ig-primario);
+    --bs-btn-border-color: var(--ig-primario);
+    --bs-btn-hover-bg: var(--ig-primario);
+    --bs-btn-hover-border-color: var(--ig-primario);
+    --bs-btn-active-bg: var(--ig-primario-oscuro);
+    --bs-btn-active-border-color: var(--ig-primario-oscuro);
+    --bs-btn-focus-shadow-rgb: var(--ig-primario-rgb);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--ig-texto-suave);
+    --bs-btn-border-color: var(--ig-borde);
+    --bs-btn-hover-bg: #e9eeec;
+    --bs-btn-hover-color: var(--ig-texto);
+    --bs-btn-hover-border-color: #cdd6d3;
+    --bs-btn-active-bg: #e1e7e5;
+    --bs-btn-active-color: var(--ig-texto);
+    --bs-btn-active-border-color: #cdd6d3;
+    background-color: #fff;
+}
+
+/* ── Formularios ── */
+
+.form-control,
+.form-select {
+    border-color: #ccd5d2;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: rgba(var(--ig-primario-rgb), 0.6);
+    box-shadow: 0 0 0 0.2rem rgba(var(--ig-primario-rgb), 0.15);
+}
+
+.form-check-input:checked {
+    background-color: var(--ig-primario);
+    border-color: var(--ig-primario);
+}
+
+.form-check-input:focus {
+    border-color: rgba(var(--ig-primario-rgb), 0.6);
+    box-shadow: 0 0 0 0.2rem rgba(var(--ig-primario-rgb), 0.15);
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--ig-texto);
+}
+
+/* ── Tarjetas ── */
+
+.card {
+    border-color: var(--ig-borde);
+    border-radius: 0.6rem;
+}
+
+.card.shadow-sm {
+    box-shadow: 0 1px 2px rgba(13, 43, 51, 0.06), 0 1px 3px rgba(13, 43, 51, 0.04) !important;
+}
+
+.card-header {
+    background-color: #fafbfa;
+    border-bottom-color: var(--ig-borde);
+}
+
+/* ── Tablas con estilo de libro contable ── */
+
+.table {
+    --bs-table-hover-bg: rgba(var(--ig-primario-rgb), 0.04);
+    font-size: 0.92rem;
+}
+
+.table > :not(caption) > * > * {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+    border-bottom-color: #e8edeb;
+}
+
+.table thead.table-dark {
+    --bs-table-bg: #f6f8f7;
+    --bs-table-color: var(--ig-texto-suave);
+    --bs-table-border-color: var(--ig-borde);
+}
+
+.table thead.table-dark th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 3px double #b9c5c1;   /* doble linea, como en los libros contables */
+    white-space: nowrap;
+}
+
+/* ── Insignias ── */
+
+.badge.bg-secondary {
+    background-color: rgba(var(--ig-primario-rgb), 0.1) !important;
+    color: var(--ig-primario-oscuro);
+    font-weight: 600;
+}
+
+/* ── Modales ── */
+
+.modal-content {
+    border-radius: 0.7rem;
+}
+
+.modal-header.bg-primary {
+    background-color: var(--ig-primario) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Sidebar
+   ══════════════════════════════════════════════════════════════════════ */
+
+#sidebar {
+    background-color: var(--ig-tinta) !important;
+    background-image: linear-gradient(180deg, var(--ig-tinta-2) 0%, var(--ig-tinta) 100%);
+}
+
+.marca-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 0.5rem;
+    background-color: rgba(201, 165, 74, 0.14);
+    color: var(--ig-dorado);
+    font-size: 1.05rem;
+}
+
+.marca-nombre {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.15;
+}
+
+.marca-detalle {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+
 /* Links del sidebar */
 .sidebar-link {
     color: rgba(255, 255, 255, 0.65);
@@ -14,8 +262,9 @@
 }
 
 .sidebar-link.active {
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.1);
     color: #ffffff;
+    box-shadow: inset 3px 0 0 var(--ig-dorado);
 }
 
 /* ── Toggle de contraseña ── */
@@ -94,4 +343,103 @@ input[type="password"].form-control.is-invalid {
 
 #sidebar-backdrop.show {
     display: block;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Panel de inicio
+   ══════════════════════════════════════════════════════════════════════ */
+
+.indicador {
+    border-top: 3px solid var(--ig-borde) !important;
+}
+
+.indicador.ingreso   { border-top-color: var(--ig-ingreso) !important; }
+.indicador.gasto     { border-top-color: var(--ig-gasto) !important; }
+.indicador.resultado { border-top-color: var(--ig-resultado) !important; }
+.indicador.porcentaje { border-top-color: var(--ig-dorado) !important; }
+
+.indicador .etiqueta {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ig-texto-suave);
+}
+
+.indicador .valor {
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: #9aa7a6;
+}
+
+.indicador .icono {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.indicador.ingreso .icono   { background: rgba(21, 115, 71, 0.1);  color: var(--ig-ingreso); }
+.indicador.gasto .icono     { background: rgba(180, 35, 24, 0.1);  color: var(--ig-gasto); }
+.indicador.resultado .icono { background: rgba(29, 79, 145, 0.1);  color: var(--ig-resultado); }
+.indicador.porcentaje .icono { background: rgba(201, 165, 74, 0.15); color: #9a7a24; }
+
+.modulo {
+    border: 1px solid var(--ig-borde);
+    border-radius: 0.6rem;
+    background: #fff;
+    padding: 0.9rem 1rem;
+    height: 100%;
+}
+
+.modulo .codigo {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: var(--ig-texto-suave);
+}
+
+.estado-disponible {
+    background: rgba(21, 115, 71, 0.1);
+    color: var(--ig-ingreso);
+    font-weight: 600;
+}
+
+.estado-pendiente {
+    background: #eef1f0;
+    color: var(--ig-texto-suave);
+    font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Pantalla de inicio de sesion
+   ══════════════════════════════════════════════════════════════════════ */
+
+.login-panel {
+    background-color: var(--ig-tinta);
+    background-image:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 44px),
+        linear-gradient(160deg, var(--ig-tinta-2) 0%, var(--ig-tinta) 70%);
+    color: #fff;
+}
+
+.login-panel .formula {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    border-left: 2px solid var(--ig-dorado);
+    padding-left: 1rem;
+}
+
+.login-panel .formula .positivo { color: #7fd1a6; }
+.login-panel .formula .negativo { color: #f2a19a; }
+
+.login-panel .rasgo {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.92rem;
+}
+
+.login-panel .rasgo i {
+    color: var(--ig-dorado);
 }
