@@ -47,3 +47,48 @@ class MovimientoForm(forms.ModelForm):
     def clean_concepto(self):
         # Quita espacios repetidos: "Venta   de  contado" -> "Venta de contado"
         return ' '.join(self.cleaned_data['concepto'].split())
+
+
+
+class FiltroMovimientosForm(forms.Form):
+    """
+    Filtros de las listas de ingresos y gastos (RF08). Se envían por GET.
+    El rango de fechas es inclusivo: "desde" y "hasta" entran en el resultado.
+    """
+
+    desde = forms.DateField(label='Desde', required=False)
+    hasta = forms.DateField(label='Hasta', required=False)
+    categoria = forms.ModelChoiceField(
+        label='Categoría', queryset=Categoria.objects.none(),
+        required=False, empty_label='Todas',
+    )
+
+    def __init__(self, *args, tipo, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Se incluyen las inactivas: sirven para consultar registros históricos
+        campo = self.fields['categoria']
+        campo.queryset = Categoria.objects.filter(tipo=tipo).order_by('nombre')
+        campo.label_from_instance = lambda c: c.nombre if c.activo else f'{c.nombre} (inactiva)'
+        campo.error_messages['invalid_choice'] = 'La categoría seleccionada no es válida.'
+
+    @property
+    def hay_filtros(self):
+        return any(self.data.get(nombre) for nombre in self.fields)
+
+    def clean(self):
+        datos = super().clean()
+        desde, hasta = datos.get('desde'), datos.get('hasta')
+        if desde and hasta and desde > hasta:
+            raise forms.ValidationError('La fecha "Desde" no puede ser posterior a la fecha "Hasta".')
+        return datos
+
+    def filtrar(self, movimientos):
+        """Aplica los filtros válidos a un queryset de movimientos."""
+        datos = self.cleaned_data
+        if datos.get('desde'):
+            movimientos = movimientos.filter(fecha__gte=datos['desde'])
+        if datos.get('hasta'):
+            movimientos = movimientos.filter(fecha__lte=datos['hasta'])
+        if datos.get('categoria'):
+            movimientos = movimientos.filter(categoria=datos['categoria'])
+        return movimientos

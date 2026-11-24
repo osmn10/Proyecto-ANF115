@@ -2,6 +2,12 @@
 Consultas compartidas por ingresos y gastos.
 Cada proxy define PERMISO_VER_TODOS (p. ej. 'ingresos.ver_todos_ingresos').
 """
+from decimal import Decimal
+
+from django.core.paginator import Paginator
+from django.db.models import Count, Sum
+
+POR_PAGINA = 20
 
 
 def puede_ver_todos(modelo, usuario):
@@ -18,3 +24,26 @@ def movimientos_visibles(modelo, usuario):
     if puede_ver_todos(modelo, usuario):
         return movimientos
     return movimientos.filter(creado_por=usuario)
+
+
+def resumir(movimientos):
+    """
+    Total y cantidad del conjunto COMPLETO filtrado (no solo de la página visible).
+    Sin registros, el total es 0.00.
+    """
+    datos = movimientos.aggregate(total=Sum('monto'), cantidad=Count('id'))
+    return {
+        'total': datos['total'] or Decimal('0.00'),
+        'cantidad': datos['cantidad'],
+    }
+
+
+def paginar(request, movimientos, por_pagina=POR_PAGINA):
+    """
+    Devuelve la página pedida en ?pagina=N y el rango de números a mostrar.
+    Un número inválido o fuera de rango muestra la primera o la última página.
+    """
+    paginador = Paginator(movimientos, por_pagina)
+    pagina = paginador.get_page(request.GET.get('pagina'))
+    rango = paginador.get_elided_page_range(pagina.number, on_each_side=1, on_ends=1)
+    return pagina, rango
