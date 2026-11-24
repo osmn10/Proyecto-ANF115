@@ -30,7 +30,11 @@ def _permisos_agrupados():
         items = []
         for p in grupo:
             accion = p.codename.split('_')[0]
-            label = f"{_ACCIONES_ES.get(accion, accion)} {p.content_type.model}"
+            if accion in _ACCIONES_ES:
+                label = f"{_ACCIONES_ES[accion]} {p.content_type.model}"
+            else:
+                # Permiso personalizado (Meta.permissions): se muestra su nombre descriptivo
+                label = p.name
             items.append({'pk': p.pk, 'label': label})
         resultado.append((app_label, items))
     return resultado

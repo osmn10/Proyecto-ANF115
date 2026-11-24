@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'core',
     'seguridad',
     'categorias',
+    'movimientos',
+    'ingresos',
 ]
 
 MIDDLEWARE = [
