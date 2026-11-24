@@ -1,0 +1,70 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{% if ve_todos %}Ingresos{% else %}Mis ingresos{% endif %} - Control de Ingresos y Gastos{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0 fw-semibold">{% if ve_todos %}Ingresos{% else %}Mis ingresos{% endif %}</h4>
+        <small class="text-muted">
+            {% if ve_todos %}Ingresos registrados por todos los usuarios.{% else %}Solo se muestran los ingresos que registraste.{% endif %}
+        </small>
+    </div>
+    {% if perms.ingresos.add_ingreso %}
+    <a href="{% url 'ingresos:registrar_ingreso' %}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+        <i class="bi bi-plus-lg"></i> Registrar ingreso
+    </a>
+    {% endif %}
+</div>
+
+{% if ingresos %}
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Concepto</th>
+                    <th>Categoría</th>
+                    {% if ve_todos %}<th>Registrado por</th>{% endif %}
+                    <th class="text-end">Monto</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ingreso in ingresos %}
+                <tr>
+                    <td class="text-nowrap">{{ ingreso.fecha|date:"d/m/Y" }}</td>
+                    <td>{{ ingreso.concepto|truncatechars:60 }}</td>
+                    <td>{{ ingreso.categoria.nombre }}</td>
+                    {% if ve_todos %}
+                    <td>
+                        {{ ingreso.creado_por.username }}
+                        {% if ingreso.creado_por.eliminado %}<i class="bi bi-person-x text-muted" title="Usuario eliminado"></i>{% endif %}
+                    </td>
+                    {% endif %}
+                    <td class="text-end text-nowrap fw-semibold" style="color: var(--ig-ingreso);">${{ ingreso.monto|floatformat:"2g" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'ingresos:detalle_ingreso' ingreso.pk %}" class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-cash-coin fs-1 d-block mb-3 opacity-25"></i>
+    <p class="mb-3">No hay ingresos registrados.</p>
+    {% if perms.ingresos.add_ingreso %}
+    <a href="{% url 'ingresos:registrar_ingreso' %}" class="btn btn-primary btn-sm">Registrar el primero</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

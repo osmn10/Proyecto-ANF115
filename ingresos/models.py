@@ -9,6 +9,7 @@ class Ingreso(MovimientoFinanciero):
     """
 
     TIPO = TipoMovimiento.INGRESO
+    PERMISO_VER_TODOS = 'ingresos.ver_todos_ingresos'
 
     class Meta:
         proxy = True

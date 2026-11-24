@@ -1,0 +1,118 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block titulo %}Registrar ingreso - Control de Ingresos y Gastos{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0 fw-semibold">Registrar ingreso</h4>
+    <a href="{% url 'ingresos:lista_ingresos' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="card shadow-sm mx-auto" style="max-width: 640px;">
+    <div class="card-body p-4">
+
+        {% if not form.hay_categorias %}
+        <div class="alert alert-warning d-flex align-items-start gap-2">
+            <i class="bi bi-exclamation-triangle mt-1"></i>
+            <div>
+                No hay categorías de ingreso activas, por lo que no es posible registrar ingresos.
+                {% if perms.categorias.add_categoria %}
+                    <a href="{% url 'categorias:crear_categoria' %}" class="alert-link">Crear una categoría</a>.
+                {% else %}
+                    Solicita a un administrador que cree una.
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" data-evitar-doble-envio novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="{{ form.concepto.id_for_label }}" class="form-label">{{ form.concepto.label }}</label>
+                <input type="text"
+                       name="{{ form.concepto.html_name }}"
+                       id="{{ form.concepto.id_for_label }}"
+                       maxlength="{{ form.concepto.field.max_length }}"
+                       class="form-control {% if form.concepto.errors %}is-invalid{% endif %}"
+                       value="{{ form.concepto.value|default:'' }}"
+                       placeholder="Ej: Venta de contado del día"
+                       required>
+                {% for error in form.concepto.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label for="{{ form.monto.id_for_label }}" class="form-label">{{ form.monto.label }} (USD)</label>
+                    <div class="input-group has-validation">
+                        <span class="input-group-text">$</span>
+                        <input type="number"
+                               name="{{ form.monto.html_name }}"
+                               id="{{ form.monto.id_for_label }}"
+                               step="0.01" min="0.01" inputmode="decimal"
+                               class="form-control {% if form.monto.errors %}is-invalid{% endif %}"
+                               value="{{ form.monto.value|default:'' }}"
+                               placeholder="0.00"
+                               required>
+                        {% for error in form.monto.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <label for="{{ form.fecha.id_for_label }}" class="form-label">{{ form.fecha.label }} del cobro</label>
+                    <input type="date"
+                           name="{{ form.fecha.html_name }}"
+                           id="{{ form.fecha.id_for_label }}"
+                           max="{{ form.fecha_maxima|date:'Y-m-d' }}"
+                           class="form-control {% if form.fecha.errors %}is-invalid{% endif %}"
+                           value="{{ form.fecha.value|date:'Y-m-d'|default:form.fecha.value|default:'' }}"
+                           required>
+                    {% for error in form.fecha.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="{{ form.categoria.id_for_label }}" class="form-label">{{ form.categoria.label }}</label>
+                <select name="{{ form.categoria.html_name }}"
+                        id="{{ form.categoria.id_for_label }}"
+                        class="form-select {% if form.categoria.errors %}is-invalid{% endif %}"
+                        required>
+                    {% for opcion in form.categoria %}
+                        <option value="{{ opcion.data.value }}" {% if opcion.data.selected %}selected{% endif %}>{{ opcion.choice_label }}</option>
+                    {% endfor %}
+                </select>
+                {% for error in form.categoria.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary d-flex align-items-center gap-2" {% if not form.hay_categorias %}disabled{% endif %}>
+                    <i class="bi bi-check-lg"></i> Registrar ingreso
+                </button>
+                <a href="{% url 'ingresos:lista_ingresos' %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{% static 'movimientos/js/evitar_doble_envio.js' %}"></script>
+{% endblock %}
