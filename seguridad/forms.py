@@ -5,7 +5,7 @@ from django import forms
 from .models import Usuario
 
 
-APPS_NEGOCIO = ['seguridad', 'categorias', 'ingresos']
+APPS_NEGOCIO = ['seguridad', 'categorias', 'ingresos', 'gastos']
 
 
 class RolForm(forms.ModelForm):

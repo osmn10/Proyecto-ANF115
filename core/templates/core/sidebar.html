@@ -31,7 +31,7 @@
             </li>
 
             {# Seccion Finanzas: solo se muestra si tiene acceso a al menos un item #}
-            {% if perms.ingresos.view_ingreso or perms.categorias.view_categoria %}
+             {% if perms.ingresos.view_ingreso or perms.gastos.view_gasto or perms.categorias.view_categoria %}
             <li class="sidebar-seccion mt-3 mb-1 px-3">
                 <span class="text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.08em; color: rgba(255,255,255,0.35);">Finanzas</span>
             </li>
@@ -43,6 +43,17 @@
                    title="Ingresos">
                     <i class="bi bi-arrow-down-circle flex-shrink-0"></i>
                     <span class="sidebar-label">Ingresos</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if perms.gastos.view_gasto %}
+            <li class="nav-item">
+                <a href="{% url 'gastos:lista_gastos' %}"
+                   class="nav-link sidebar-link{% if '/gastos/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
+                   title="Gastos">
+                    <i class="bi bi-arrow-up-circle flex-shrink-0"></i>
+                    <span class="sidebar-label">Gastos</span>
                 </a>
             </li>
             {% endif %}

@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'categorias',
     'movimientos',
     'ingresos',
+    'gastos',
 ]
 
 MIDDLEWARE = [

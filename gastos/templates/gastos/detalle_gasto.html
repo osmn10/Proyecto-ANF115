@@ -1,0 +1,82 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Gasto #{{ gasto.pk }} - Control de Ingresos y Gastos{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-center">
+<div style="width: 100%; max-width: 760px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 fw-semibold d-flex align-items-center gap-2">
+            Gasto #{{ gasto.pk }}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 fw-medium">
+                <i class="bi bi-arrow-up-right"></i> Gasto
+            </span>
+        </h4>
+        <div class="d-flex gap-2">
+            {% if perms.gastos.add_gasto %}
+            <a href="{% url 'gastos:registrar_gasto' %}" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2">
+                <i class="bi bi-plus-lg"></i> Registrar otro
+            </a>
+            {% endif %}
+            <a href="{% url 'gastos:lista_gastos' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-borderless mb-0">
+                <tbody>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4" style="width: 35%;">Concepto</td>
+                        <td class="fw-medium">{{ gasto.concepto }}</td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Monto</td>
+                        <td class="fw-semibold fs-5" style="color: var(--ig-gasto);">${{ gasto.monto|floatformat:"2g" }}</td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Fecha del pago</td>
+                        <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Categoría</td>
+                        <td>
+                            {{ gasto.categoria.nombre }}
+                            {% if not gasto.categoria.activo %}
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1">Inactiva</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Registrado por</td>
+                        <td>
+                            {{ gasto.creado_por.username }}
+                            {% if gasto.creado_por.eliminado %}
+                                <span class="badge bg-dark-subtle text-dark border border-dark-subtle ms-1"><i class="bi bi-person-x"></i> Eliminado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Fecha de registro</td>
+                        <td class="text-muted">{{ gasto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-4">Versión</td>
+                        <td class="text-muted">
+                            {{ gasto.version }}
+                            {% if gasto.version > 1 %}<small>(corregido el {{ gasto.fecha_modificacion|date:"d/m/Y H:i" }})</small>{% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</div>
+
+{% endblock %}

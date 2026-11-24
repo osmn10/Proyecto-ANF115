@@ -1,0 +1,115 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{% if ve_todos %}Gastos{% else %}Mis gastos{% endif %} - Control de Ingresos y Gastos{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0 fw-semibold">{% if ve_todos %}Gastos{% else %}Mis gastos{% endif %}</h4>
+        <small class="text-muted">
+            {% if ve_todos %}Gastos registrados por todos los usuarios.{% else %}Solo se muestran los gastos que registraste.{% endif %}
+        </small>
+    </div>
+    {% if perms.gastos.add_gasto %}
+    <a href="{% url 'gastos:registrar_gasto' %}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+        <i class="bi bi-plus-lg"></i> Registrar gasto
+    </a>
+    {% endif %}
+</div>
+
+{% url 'gastos:lista_gastos' as url_lista %}
+{% include "movimientos/_filtros.html" with url_limpiar=url_lista %}
+
+{% if resumen %}
+
+    {# Resumen del conjunto filtrado completo (RF11: periodo, moneda y filtro) #}
+    {% if resumen.cantidad or filtros.hay_filtros %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="small text-muted">
+                {% if filtros.cleaned_data.desde or filtros.cleaned_data.hasta %}
+                    Período:
+                    <strong class="text-body">
+                        {% if filtros.cleaned_data.desde %}{{ filtros.cleaned_data.desde|date:"d/m/Y" }}{% else %}inicio{% endif %}
+                        –
+                        {% if filtros.cleaned_data.hasta %}{{ filtros.cleaned_data.hasta|date:"d/m/Y" }}{% else %}hoy{% endif %}
+                    </strong>
+                {% else %}
+                    Período: <strong class="text-body">todos los registros</strong>
+                {% endif %}
+                · Categoría: <strong class="text-body">{{ filtros.cleaned_data.categoria.nombre|default:"todas" }}</strong>
+                · {{ resumen.cantidad }} gasto{{ resumen.cantidad|pluralize }}
+            </div>
+            <div>
+                <span class="text-muted small me-1">Total</span>
+                <span class="fw-semibold fs-5" style="color: var(--ig-gasto);">${{ resumen.total|floatformat:"2g" }}</span>
+                <span class="text-muted small">USD</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if pagina.object_list %}
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Concepto</th>
+                        <th>Categoría</th>
+                        {% if ve_todos %}<th>Registrado por</th>{% endif %}
+                        <th class="text-end">Monto</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gasto in pagina %}
+                    <tr>
+                        <td class="text-nowrap">{{ gasto.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ gasto.concepto|truncatechars:60 }}</td>
+                        <td>{{ gasto.categoria.nombre }}</td>
+                        {% if ve_todos %}
+                        <td>
+                            {{ gasto.creado_por.username }}
+                            {% if gasto.creado_por.eliminado %}<i class="bi bi-person-x text-muted" title="Usuario eliminado"></i>{% endif %}
+                        </td>
+                        {% endif %}
+                        <td class="text-end text-nowrap fw-semibold" style="color: var(--ig-gasto);">${{ gasto.monto|floatformat:"2g" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'gastos:detalle_gasto' gasto.pk %}" class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white small text-muted">
+            Mostrando {{ pagina.start_index }}–{{ pagina.end_index }} de {{ pagina.paginator.count }}
+        </div>
+    </div>
+
+    {% include "movimientos/_paginacion.html" %}
+
+    {% elif filtros.hay_filtros %}
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-funnel fs-1 d-block mb-3 opacity-25"></i>
+        <p class="mb-0">No hay gastos que coincidan con los filtros.</p>
+    </div>
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-receipt fs-1 d-block mb-3 opacity-25"></i>
+        <p class="mb-3">No hay gastos registrados.</p>
+        {% if perms.gastos.add_gasto %}
+        <a href="{% url 'gastos:registrar_gasto' %}" class="btn btn-primary btn-sm">Registrar el primero</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}
