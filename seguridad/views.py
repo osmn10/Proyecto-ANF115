@@ -1,11 +1,10 @@
 from itertools import groupby
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.models import Group, Permission
-from django.db.models import Count
+from django.db.models import Count, F
 from django.contrib import messages
 from django.urls import reverse_lazy
 
@@ -43,7 +42,8 @@ def _permisos_agrupados():
 @login_required
 @permission_required('seguridad.view_usuario', raise_exception=True)
 def lista_usuarios(request):
-    usuarios = Usuario.objects.all().order_by('username')
+    # Los eliminados se muestran al final de la lista
+    usuarios = Usuario.objects.order_by(F('fecha_eliminacion').asc(nulls_first=True), 'username')
     return render(request, 'seguridad/lista_usuarios.html', {'usuarios': usuarios})
 
 
@@ -74,7 +74,7 @@ def crear_usuario(request):
 @login_required
 @permission_required('seguridad.change_usuario', raise_exception=True)
 def editar_usuario(request, id):
-    usuario = get_object_or_404(Usuario, pk=id)
+    usuario = get_object_or_404(Usuario, pk=id, fecha_eliminacion__isnull=True)
     if request.method == 'POST':
         form = UsuarioEditarForm(request.POST, instance=usuario)
         if form.is_valid():
@@ -89,10 +89,13 @@ def editar_usuario(request, id):
 @login_required
 @permission_required('seguridad.delete_usuario', raise_exception=True)
 def eliminar_usuario(request, id):
-    usuario = get_object_or_404(Usuario, pk=id)
+    usuario = get_object_or_404(Usuario, pk=id, fecha_eliminacion__isnull=True)
+    if usuario == request.user:
+        messages.error(request, 'No puedes eliminar tu propia cuenta.')
+        return redirect('seguridad:lista_usuarios')
     if request.method == 'POST':
-        usuario.delete()
-        messages.success(request, 'Usuario eliminado correctamente.')
+        usuario.eliminar()  # eliminacion logica: conserva la fila y sus registros
+        messages.success(request, f'Usuario {usuario.username} eliminado correctamente.')
         return redirect('seguridad:lista_usuarios')
     return render(request, 'seguridad/eliminar_usuario.html', {'usuario': usuario})
 
@@ -168,7 +171,7 @@ def usuarios_rol(request, id):
     if request.method == 'POST':
         accion = request.POST.get('accion')
         usuario_id = request.POST.get('usuario_id')
-        usuario = get_object_or_404(Usuario, pk=usuario_id)
+        usuario = get_object_or_404(Usuario, pk=usuario_id, fecha_eliminacion__isnull=True)
         if accion == 'agregar':
             usuario.groups.add(rol)
             messages.success(request, f'Usuario {usuario.username} agregado al rol.')
@@ -178,7 +181,8 @@ def usuarios_rol(request, id):
         return redirect('seguridad:usuarios_rol', id=id)
 
     usuarios_con_rol = rol.user_set.all().order_by('username')
-    usuarios_sin_rol = Usuario.objects.exclude(groups=rol).order_by('username')
+    usuarios_sin_rol = Usuario.objects.exclude(groups=rol).filter(
+        fecha_eliminacion__isnull=True).order_by('username')
     return render(request, 'seguridad/usuarios_rol.html', {
         'rol': rol,
         'usuarios_con_rol': usuarios_con_rol,
@@ -191,7 +195,7 @@ def usuarios_rol(request, id):
 @login_required
 @permission_required('seguridad.change_usuario', raise_exception=True)
 def resetear_password(request, id):
-    usuario = get_object_or_404(Usuario, pk=id)
+    usuario = get_object_or_404(Usuario, pk=id, fecha_eliminacion__isnull=True)
     if request.method == 'POST':
         form = ResetearPasswordForm(request.POST)
         if form.is_valid():
