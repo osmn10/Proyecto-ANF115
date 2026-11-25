@@ -1,10 +1,13 @@
+from datetime import date
+from decimal import Decimal
+
 from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from categorias.models import Categoria, TipoMovimiento
@@ -96,3 +99,70 @@ class MovimientoFinanciero(ModeloBase):
     def save(self, *args, **kwargs):
         self._asignar_tipo()
         super().save(*args, **kwargs)
+
+
+
+def _formatear_valor(campo, valor):
+    """Texto legible de un valor guardado en el historial (montos como $1,234.50)."""
+    if campo == 'monto':
+        return f'${Decimal(valor):,.2f}'
+    if campo == 'fecha':
+        return date.fromisoformat(valor).strftime('%d/%m/%Y')
+    if campo == 'categoria':
+        return valor['nombre']
+    return valor
+
+
+class CorreccionMovimiento(ModeloBase):
+    """
+    Historial de correcciones de un movimiento (CU08, RN10, RN11).
+    Cada correccion guarda quien la hizo, el motivo y los valores de antes y despues.
+    Es un registro de solo escritura: la aplicacion nunca lo edita ni lo elimina.
+    fecha_creacion (de ModeloBase) es el momento exacto de la correccion.
+    Cuando exista la bitacora de Seguridad, este historial se conecta o se migra a ella.
+    """
+
+    ETIQUETAS = {
+        'concepto': 'Concepto',
+        'monto': 'Monto',
+        'fecha': 'Fecha',
+        'categoria': 'Categoría',
+    }
+
+    movimiento = models.ForeignKey(
+        MovimientoFinanciero, on_delete=models.PROTECT,
+        related_name='correcciones', verbose_name='movimiento',
+    )
+    version_anterior = models.PositiveIntegerField('versión anterior')
+    version_nueva = models.PositiveIntegerField('versión nueva')
+    motivo = models.CharField('motivo', max_length=250)
+    antes = models.JSONField('valores anteriores')
+    despues = models.JSONField('valores nuevos')
+    realizado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        related_name='correcciones_realizadas', verbose_name='corregido por',
+    )
+
+    class Meta:
+        verbose_name = 'corrección de movimiento'
+        verbose_name_plural = 'correcciones de movimientos'
+        ordering = ['-version_nueva']
+        default_permissions = ()  # no se administra desde Roles: se consulta junto al movimiento
+        constraints = [
+            models.UniqueConstraint(
+                fields=['movimiento', 'version_nueva'], name='correccion_version_unica'),
+            models.CheckConstraint(
+                condition=Q(version_nueva__gt=F('version_anterior')), name='correccion_version_avanza'),
+        ]
+
+    def __str__(self):
+        return f'Corrección v{self.version_nueva} de {self.movimiento}'
+
+    def cambios(self):
+        """Lista de (campo, antes, despues) solo con lo que realmente cambio, ya formateado."""
+        resultado = []
+        for campo, etiqueta in self.ETIQUETAS.items():
+            antes, despues = self.antes.get(campo), self.despues.get(campo)
+            if antes != despues:
+                resultado.append((etiqueta, _formatear_valor(campo, antes), _formatear_valor(campo, despues)))
+        return resultado

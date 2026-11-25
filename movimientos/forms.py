@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from categorias.models import Categoria
-
+from .servicios import aplicar_correccion, tomar_instantanea
 
 class MovimientoForm(forms.ModelForm):
     """
@@ -48,7 +48,44 @@ class MovimientoForm(forms.ModelForm):
         # Quita espacios repetidos: "Venta   de  contado" -> "Venta de contado"
         return ' '.join(self.cleaned_data['concepto'].split())
 
+class CorreccionMovimientoForm(MovimientoForm):
+    """
+    Formulario base para corregir un ingreso o un gasto (CU08). Se usa siempre con
+    instance=<movimiento>. Agrega el motivo (obligatorio) y la version que la persona
+    tenia en pantalla, para detectar si alguien mas cambio el registro (RNF09).
+    El tipo y el autor no son campos: no se pueden cambiar (RN10).
+    """
 
+    motivo = forms.CharField(
+        label='Motivo de la corrección', max_length=250, strip=True,
+        error_messages={'required': 'Indica el motivo de la corrección.'},
+    )
+    version_esperada = forms.IntegerField(widget=forms.HiddenInput, min_value=1)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Se toma ahora: despues de is_valid() la instancia ya trae los valores nuevos.
+        self.antes = tomar_instantanea(self.instance)
+        self._originales = (
+            self.instance.concepto, self.instance.monto,
+            self.instance.fecha, self.instance.categoria_id,
+        )
+        self.fields['version_esperada'].initial = self.instance.version
+
+    def clean(self):
+        datos = super().clean()
+        categoria = datos.get('categoria')
+        nuevos = (datos.get('concepto'), datos.get('monto'), datos.get('fecha'), categoria.pk if categoria else None)
+        if None not in nuevos and nuevos == self._originales:
+            raise forms.ValidationError('No hay cambios que guardar. Modifica al menos un campo.')
+        return datos
+
+    def guardar_correccion(self, usuario):
+        """Guarda el movimiento y su historial. Lanza ConflictoDeVersion si el registro cambio."""
+        return aplicar_correccion(
+            self.instance, antes=self.antes, motivo=self.cleaned_data['motivo'],
+            version_esperada=self.cleaned_data['version_esperada'], usuario=usuario,
+        )
 
 class FiltroMovimientosForm(forms.Form):
     """
