@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from movimientos.consultas import movimientos_visibles, paginar, puede_ver_todos, resumir
 from movimientos.forms import FiltroMovimientosForm
+from movimientos.servicios import ConflictoDeVersion
 
-from .forms import IngresoForm
+from .forms import IngresoCorreccionForm, IngresoForm
 from .models import Ingreso
 
 
@@ -50,7 +51,35 @@ def registrar_ingreso(request):
 def detalle_ingreso(request, id):
     # Si el ingreso es de otro usuario y no tiene "ver todos", responde 404
     ingreso = get_object_or_404(movimientos_visibles(Ingreso, request.user), pk=id)
-    return render(request, 'ingresos/detalle_ingreso.html', {
+    contexto = {
         'ingreso': ingreso,
         've_todos': puede_ver_todos(Ingreso, request.user),
-    })
+    }
+    # El historial de correcciones solo lo ve quien puede corregir (administrador)
+    if request.user.has_perm('ingresos.change_ingreso'):
+        contexto['correcciones'] = ingreso.correcciones.select_related('realizado_por')
+    return render(request, 'ingresos/detalle_ingreso.html', contexto)
+
+
+@login_required
+@permission_required('ingresos.change_ingreso', raise_exception=True)
+def corregir_ingreso(request, id):
+    # Mismo alcance que la consulta: sin "ver todos" solo se corrigen los propios
+    ingreso = get_object_or_404(movimientos_visibles(Ingreso, request.user), pk=id)
+    if request.method == 'POST':
+        form = IngresoCorreccionForm(request.POST, instance=ingreso)
+        if form.is_valid():
+            try:
+                form.guardar_correccion(request.user)
+            except ConflictoDeVersion:
+                # Otra persona corrigió el registro mientras esta pantalla estaba abierta
+                messages.error(
+                    request,
+                    'El registro cambió. Recarga antes de guardar: revisa los valores actuales '
+                    'y vuelve a aplicar tu corrección.')
+                return redirect('ingresos:corregir_ingreso', id=id)
+            messages.success(request, f'Ingreso #{id} corregido correctamente.')
+            return redirect('ingresos:detalle_ingreso', id=id)
+    else:
+        form = IngresoCorreccionForm(instance=ingreso)
+    return render(request, 'ingresos/corregir_ingreso.html', {'form': form, 'ingreso': ingreso})

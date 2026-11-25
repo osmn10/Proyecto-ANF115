@@ -77,10 +77,15 @@
                         </td>
                         {% endif %}
                         <td class="text-end text-nowrap fw-semibold" style="color: var(--ig-ingreso);">${{ ingreso.monto|floatformat:"2g" }}</td>
-                        <td class="text-end">
+                        <td class="text-end text-nowrap">
                             <a href="{% url 'ingresos:detalle_ingreso' ingreso.pk %}" class="btn btn-sm btn-outline-primary" title="Ver detalle">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            {% if perms.ingresos.change_ingreso %}
+                            <a href="{% url 'ingresos:corregir_ingreso' ingreso.pk %}" class="btn btn-sm btn-outline-warning" title="Corregir">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

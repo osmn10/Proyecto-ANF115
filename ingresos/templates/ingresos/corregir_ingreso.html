@@ -1,0 +1,131 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block titulo %}Corregir ingreso #{{ ingreso.pk }} - Control de Ingresos y Gastos{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0 fw-semibold">Corregir ingreso #{{ ingreso.pk }}</h4>
+    <a href="{% url 'ingresos:detalle_ingreso' ingreso.pk %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="card shadow-sm mx-auto" style="max-width: 640px;">
+    <div class="card-body p-4">
+
+        <div class="alert alert-info d-flex align-items-start gap-2 small">
+            <i class="bi bi-info-circle mt-1"></i>
+            <div>
+                El registro original no se borra: cada corrección guarda el motivo y los valores anteriores.
+                El tipo y quien lo registró (<strong>{{ ingreso.creado_por.username }}</strong>) no se pueden cambiar.
+                Versión actual: <strong>{{ ingreso.version }}</strong>.
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" data-evitar-doble-envio novalidate>
+            {% csrf_token %}
+            {{ form.version_esperada }}
+            {% for error in form.version_esperada.errors %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endfor %}
+
+            <div class="mb-3">
+                <label for="{{ form.concepto.id_for_label }}" class="form-label">{{ form.concepto.label }}</label>
+                <input type="text"
+                       name="{{ form.concepto.html_name }}"
+                       id="{{ form.concepto.id_for_label }}"
+                       maxlength="{{ form.concepto.field.max_length }}"
+                       class="form-control {% if form.concepto.errors %}is-invalid{% endif %}"
+                       value="{{ form.concepto.value|default:'' }}"
+                       required>
+                {% for error in form.concepto.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label for="{{ form.monto.id_for_label }}" class="form-label">{{ form.monto.label }} (USD)</label>
+                    <div class="input-group has-validation">
+                        <span class="input-group-text">$</span>
+                        <input type="number"
+                               name="{{ form.monto.html_name }}"
+                               id="{{ form.monto.id_for_label }}"
+                               step="0.01" min="0.01" inputmode="decimal"
+                               class="form-control {% if form.monto.errors %}is-invalid{% endif %}"
+                               value="{{ form.monto.value|default:'' }}"
+                               required>
+                        {% for error in form.monto.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <label for="{{ form.fecha.id_for_label }}" class="form-label">{{ form.fecha.label }} del cobro</label>
+                    <input type="date"
+                           name="{{ form.fecha.html_name }}"
+                           id="{{ form.fecha.id_for_label }}"
+                           max="{{ form.fecha_maxima|date:'Y-m-d' }}"
+                           class="form-control {% if form.fecha.errors %}is-invalid{% endif %}"
+                           value="{{ form.fecha.value|date:'Y-m-d'|default:form.fecha.value|default:'' }}"
+                           required>
+                    {% for error in form.fecha.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.categoria.id_for_label }}" class="form-label">{{ form.categoria.label }}</label>
+                <select name="{{ form.categoria.html_name }}"
+                        id="{{ form.categoria.id_for_label }}"
+                        class="form-select {% if form.categoria.errors %}is-invalid{% endif %}"
+                        required>
+                    {% for opcion in form.categoria %}
+                        <option value="{{ opcion.data.value }}" {% if opcion.data.selected %}selected{% endif %}>{{ opcion.choice_label }}</option>
+                    {% endfor %}
+                </select>
+                {% for error in form.categoria.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <hr class="my-4">
+
+            <div class="mb-4">
+                <label for="{{ form.motivo.id_for_label }}" class="form-label">{{ form.motivo.label }}</label>
+                <textarea name="{{ form.motivo.html_name }}"
+                          id="{{ form.motivo.id_for_label }}"
+                          rows="3" maxlength="{{ form.motivo.field.max_length }}"
+                          class="form-control {% if form.motivo.errors %}is-invalid{% endif %}"
+                          placeholder="Ej: El cliente pagó 120.00, no 100.00"
+                          required>{{ form.motivo.value|default:'' }}</textarea>
+                {% for error in form.motivo.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+                <div class="form-text">Obligatorio. Queda registrado junto con los valores anteriores.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+                    <i class="bi bi-check-lg"></i> Guardar corrección
+                </button>
+                <a href="{% url 'ingresos:detalle_ingreso' ingreso.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{% static 'movimientos/js/evitar_doble_envio.js' %}"></script>
+{% endblock %}
