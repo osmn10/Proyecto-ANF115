@@ -15,6 +15,11 @@
             </span>
         </h4>
         <div class="d-flex gap-2">
+            {% if perms.gastos.change_gasto %}
+            <a href="{% url 'gastos:corregir_gasto' gasto.pk %}" class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square"></i> Corregir
+            </a>
+            {% endif %}
             {% if perms.gastos.add_gasto %}
             <a href="{% url 'gastos:registrar_gasto' %}" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2">
                 <i class="bi bi-plus-lg"></i> Registrar otro
@@ -75,6 +80,47 @@
             </table>
         </div>
     </div>
+
+    {% if perms.gastos.change_gasto %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history"></i> Historial de correcciones
+        </div>
+        {% if correcciones %}
+        <ul class="list-group list-group-flush">
+            {% for correccion in correcciones %}
+            <li class="list-group-item px-4 py-3">
+                <div class="d-flex justify-content-between flex-wrap gap-1 mb-2">
+                    <span class="fw-medium">
+                        Versión {{ correccion.version_anterior }} → {{ correccion.version_nueva }}
+                    </span>
+                    <small class="text-muted">
+                        {{ correccion.realizado_por.username }}
+                        {% if correccion.realizado_por.eliminado %}<i class="bi bi-person-x" title="Usuario eliminado"></i>{% endif %}
+                        · {{ correccion.fecha_creacion|date:"d/m/Y H:i" }}
+                    </small>
+                </div>
+                <div class="small mb-2"><span class="text-muted">Motivo:</span> {{ correccion.motivo }}</div>
+                <table class="table table-sm table-borderless small mb-0">
+                    <tbody>
+                        {% for campo, antes, despues in correccion.cambios %}
+                        <tr>
+                            <td class="text-muted ps-0" style="width: 25%;">{{ campo }}</td>
+                            <td class="text-decoration-line-through text-muted">{{ antes }}</td>
+                            <td style="width: 24px;"><i class="bi bi-arrow-right"></i></td>
+                            <td class="fw-medium">{{ despues }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="card-body text-muted small">Este gasto no ha sido corregido.</div>
+        {% endif %}
+    </div>
+    {% endif %}
 
 </div>
 </div>
