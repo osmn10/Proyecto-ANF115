@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'movimientos',
     'ingresos',
     'gastos',
+    'finanzas',
+    'bitacora',
 ]
 
 MIDDLEWARE = [

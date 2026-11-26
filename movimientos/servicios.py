@@ -3,6 +3,8 @@ Logica compartida de la correccion de movimientos (CU08), usada por ingresos y g
 """
 from django.db import transaction
 
+from bitacora.models import EventoBitacora
+from bitacora.servicios import registrar_evento
 from .models import CorreccionMovimiento, MovimientoFinanciero
 
 
@@ -44,7 +46,7 @@ def aplicar_correccion(movimiento, *, antes, motivo, version_esperada, usuario):
 
         movimiento.version = version_esperada + 1
         movimiento.save()
-        return CorreccionMovimiento.objects.create(
+        correccion = CorreccionMovimiento.objects.create(
             movimiento=movimiento,
             version_anterior=version_esperada,
             version_nueva=movimiento.version,
@@ -53,3 +55,18 @@ def aplicar_correccion(movimiento, *, antes, motivo, version_esperada, usuario):
             despues=despues,
             realizado_por=usuario,
         )
+        registrar_evento(
+            usuario=usuario,
+            accion=EventoBitacora.Accion.MOVIMIENTO_CORREGIDO,
+            resumen=f'{movimiento.get_tipo_display()} #{movimiento.pk} corregido',
+            entidad='Movimiento financiero',
+            entidad_id=movimiento.pk,
+            detalles={
+                'motivo': motivo,
+                'antes': antes,
+                'despues': despues,
+                'version_anterior': version_esperada,
+                'version_nueva': movimiento.version,
+            },
+        )
+        return correccion

@@ -15,7 +15,7 @@
     <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{% now "j \d\e F \d\e Y" %}</span>
 </div>
 
-{# Indicadores del periodo: se calcularan cuando existan los modulos de Ingresos y Gastos #}
+{# Indicadores del mes actual, calculados con los movimientos visibles para el usuario #}
 <div class="row g-3 mb-2">
     <div class="col-sm-6 col-xl-3">
         <div class="card shadow-sm indicador ingreso h-100">
@@ -24,7 +24,7 @@
                     <span class="etiqueta">Ingresos totales</span>
                     <span class="icono"><i class="bi bi-arrow-down-left"></i></span>
                 </div>
-                <div class="valor cifra">—</div>
+                {% if resumen_disponible %}<div class="valor cifra text-success">&#36;{{ ingresos|floatformat:2 }}</div>{% else %}<div class="valor cifra">—</div>{% endif %}
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
                     <span class="etiqueta">Gastos totales</span>
                     <span class="icono"><i class="bi bi-arrow-up-right"></i></span>
                 </div>
-                <div class="valor cifra">—</div>
+                {% if resumen_disponible %}<div class="valor cifra text-danger">&#36;{{ gastos|floatformat:2 }}</div>{% else %}<div class="valor cifra">—</div>{% endif %}
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@
                     <span class="etiqueta">Resultado financiero</span>
                     <span class="icono"><i class="bi bi-calculator"></i></span>
                 </div>
-                <div class="valor cifra">—</div>
+                {% if resumen_disponible %}<div class="valor cifra {% if resultado < 0 %}text-danger{% else %}text-primary{% endif %}">&#36;{{ resultado|floatformat:2 }}</div>{% else %}<div class="valor cifra">—</div>{% endif %}
             </div>
         </div>
     </div>
@@ -57,14 +57,21 @@
                     <span class="etiqueta">Porcentaje de gastos</span>
                     <span class="icono"><i class="bi bi-percent"></i></span>
                 </div>
-                <div class="valor cifra">—</div>
+                {% if resumen_disponible and porcentaje_gastos != None %}<div class="valor cifra">{{ porcentaje_gastos|floatformat:2 }}%</div>
+                {% elif resumen_disponible %}<div class="valor cifra fs-5">N/D</div>
+                {% else %}<div class="valor cifra">—</div>{% endif %}
             </div>
         </div>
     </div>
 </div>
 <p class="text-muted small mb-4">
     <i class="bi bi-info-circle me-1"></i>
-    Los indicadores se mostrarán cuando estén disponibles los módulos de Ingresos y Gastos.
+    {% if resumen_disponible %}
+    Indicadores del {{ inicio_periodo|date:"d/m/Y" }} al {{ fin_periodo|date:"d/m/Y" }}.
+    {% if perms.ingresos.view_ingreso and perms.gastos.view_gasto %}<a href="{% url 'finanzas:panel_financiero' %}" class="text-decoration-none">Abrir panel financiero <i class="bi bi-arrow-right"></i></a>{% endif %}
+    {% else %}
+    Para consultar los indicadores necesitas permisos de lectura para ingresos y gastos.
+    {% endif %}
 </p>
 
 {# Modulos del sistema y su estado #}
@@ -114,20 +121,36 @@
         <div class="modulo">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="codigo">M5 · M6</span>
-                <span class="badge estado-pendiente">En desarrollo</span>
+                {% if perms.ingresos.view_ingreso and perms.gastos.view_gasto %}
+                <span class="badge estado-disponible">Disponible</span>
+                {% else %}
+                <span class="badge estado-pendiente">Requiere permisos</span>
+                {% endif %}
             </div>
             <div class="fw-semibold">Panel financiero y reportes</div>
-            <small class="text-muted">Resultados diarios, mensuales y anuales.</small>
+            <small class="text-muted d-block mb-2">Resultados diarios, mensuales y anuales.</small>
+            {% if perms.ingresos.view_ingreso and perms.gastos.view_gasto %}
+            <a class="small fw-semibold text-decoration-none" href="{% url 'finanzas:panel_financiero' %}">Abrir panel <i class="bi bi-arrow-right"></i></a>
+            <span class="text-muted mx-1">·</span>
+            <a class="small fw-semibold text-decoration-none" href="{% url 'finanzas:reportes' %}">Ver reportes</a>
+            {% endif %}
         </div>
     </div>
     <div class="col-md-6 col-xl-4">
         <div class="modulo">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="codigo">M7</span>
-                <span class="badge estado-pendiente">En desarrollo</span>
+                {% if perms.bitacora.view_eventobitacora %}
+                <span class="badge estado-disponible">Disponible</span>
+                {% else %}
+                <span class="badge estado-pendiente">Permiso requerido</span>
+                {% endif %}
             </div>
             <div class="fw-semibold">Bitácora</div>
-            <small class="text-muted">Registro de acciones relevantes.</small>
+            <small class="text-muted d-block mb-2">Registro de acciones relevantes.</small>
+            {% if perms.bitacora.view_eventobitacora %}
+            <a class="small fw-semibold text-decoration-none" href="{% url 'bitacora:lista_eventos' %}">Consultar bitácora <i class="bi bi-arrow-right"></i></a>
+            {% endif %}
         </div>
     </div>
 </div>

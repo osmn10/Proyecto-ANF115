@@ -8,6 +8,8 @@ from django.db.models import Count, F
 from django.contrib import messages
 from django.urls import reverse_lazy
 
+from bitacora.models import EventoBitacora
+from bitacora.servicios import registrar_evento
 from .models import Usuario
 from .forms import UsuarioCrearForm, UsuarioEditarForm, RolForm, ResetearPasswordForm, APPS_NEGOCIO
 
@@ -30,7 +32,10 @@ def _permisos_agrupados():
         for p in grupo:
             accion = p.codename.split('_')[0]
             if accion in _ACCIONES_ES:
-                label = f"{_ACCIONES_ES[accion]} {p.content_type.model}"
+                modelo = p.content_type.model
+                if p.content_type.app_label == 'bitacora' and modelo == 'eventobitacora':
+                    modelo = 'eventos de bitácora'
+                label = f"{_ACCIONES_ES[accion]} {modelo}"
             else:
                 # Permiso personalizado (Meta.permissions): se muestra su nombre descriptivo
                 label = p.name
@@ -64,6 +69,17 @@ def crear_usuario(request):
             usuario.debe_cambiar_password = True
             usuario.save()
             form.save_m2m()
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.USUARIO_CREADO,
+                resumen=f'Usuario "{usuario.username}" creado',
+                entidad='Usuario',
+                entidad_id=usuario.pk,
+                detalles={
+                    'nombre_usuario': usuario.username,
+                    'roles': list(usuario.groups.values_list('name', flat=True)),
+                },
+            )
             messages.success(request, 'Usuario creado correctamente.')
             return redirect('seguridad:lista_usuarios')
     else:
@@ -76,9 +92,26 @@ def crear_usuario(request):
 def editar_usuario(request, id):
     usuario = get_object_or_404(Usuario, pk=id, fecha_eliminacion__isnull=True)
     if request.method == 'POST':
+        roles_antes = list(usuario.groups.values_list('name', flat=True))
+        nombre_antes = usuario.username
         form = UsuarioEditarForm(request.POST, instance=usuario)
         if form.is_valid():
             form.save()
+            if form.changed_data:
+                registrar_evento(
+                    usuario=request.user,
+                    accion=EventoBitacora.Accion.USUARIO_EDITADO,
+                    resumen=f'Usuario "{usuario.username}" modificado',
+                    entidad='Usuario',
+                    entidad_id=usuario.pk,
+                    detalles={
+                        'campos_modificados': form.changed_data,
+                        'nombre_usuario_antes': nombre_antes,
+                        'nombre_usuario_despues': usuario.username,
+                        'roles_antes': roles_antes,
+                        'roles_despues': list(usuario.groups.values_list('name', flat=True)),
+                    },
+                )
             messages.success(request, 'Usuario actualizado correctamente.')
             return redirect('seguridad:lista_usuarios')
     else:
@@ -95,6 +128,13 @@ def eliminar_usuario(request, id):
         return redirect('seguridad:lista_usuarios')
     if request.method == 'POST':
         usuario.eliminar()  # eliminacion logica: conserva la fila y sus registros
+        registrar_evento(
+            usuario=request.user,
+            accion=EventoBitacora.Accion.USUARIO_DESACTIVADO,
+            resumen=f'Usuario "{usuario.username}" desactivado',
+            entidad='Usuario',
+            entidad_id=usuario.pk,
+        )
         messages.success(request, f'Usuario {usuario.username} eliminado correctamente.')
         return redirect('seguridad:lista_usuarios')
     return render(request, 'seguridad/eliminar_usuario.html', {'usuario': usuario})
@@ -115,7 +155,15 @@ def crear_rol(request):
     if request.method == 'POST':
         form = RolForm(request.POST)
         if form.is_valid():
-            form.save()
+            rol = form.save()
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.ROL_CREADO,
+                resumen=f'Rol "{rol.name}" creado',
+                entidad='Rol',
+                entidad_id=rol.pk,
+                detalles={'permisos': list(rol.permissions.values_list('codename', flat=True))},
+            )
             messages.success(request, 'Rol creado correctamente.')
             return redirect('seguridad:lista_roles')
         permisos_seleccionados = set(int(pk) for pk in request.POST.getlist('permissions') if pk)
@@ -135,9 +183,26 @@ def crear_rol(request):
 def editar_rol(request, id):
     rol = get_object_or_404(Group, pk=id)
     if request.method == 'POST':
+        nombre_antes = rol.name
+        permisos_antes = list(rol.permissions.values_list('codename', flat=True))
         form = RolForm(request.POST, instance=rol)
         if form.is_valid():
             form.save()
+            permisos_despues = list(rol.permissions.values_list('codename', flat=True))
+            if nombre_antes != rol.name or permisos_antes != permisos_despues:
+                registrar_evento(
+                    usuario=request.user,
+                    accion=EventoBitacora.Accion.ROL_EDITADO,
+                    resumen=f'Rol "{rol.name}" modificado',
+                    entidad='Rol',
+                    entidad_id=rol.pk,
+                    detalles={
+                        'nombre_antes': nombre_antes,
+                        'nombre_despues': rol.name,
+                        'permisos_antes': permisos_antes,
+                        'permisos_despues': permisos_despues,
+                    },
+                )
             messages.success(request, 'Rol actualizado correctamente.')
             return redirect('seguridad:lista_roles')
         permisos_seleccionados = set(int(pk) for pk in request.POST.getlist('permissions') if pk)
@@ -158,7 +223,17 @@ def editar_rol(request, id):
 def eliminar_rol(request, id):
     rol = get_object_or_404(Group, pk=id)
     if request.method == 'POST':
+        nombre_rol = rol.name
+        permisos_rol = list(rol.permissions.values_list('codename', flat=True))
         rol.delete()
+        registrar_evento(
+            usuario=request.user,
+            accion=EventoBitacora.Accion.ROL_ELIMINADO,
+            resumen=f'Rol "{nombre_rol}" eliminado',
+            entidad='Rol',
+            entidad_id=id,
+            detalles={'nombre': nombre_rol, 'permisos': permisos_rol},
+        )
         messages.success(request, 'Rol eliminado correctamente.')
         return redirect('seguridad:lista_roles')
     return render(request, 'seguridad/eliminar_rol.html', {'rol': rol})
@@ -174,9 +249,25 @@ def usuarios_rol(request, id):
         usuario = get_object_or_404(Usuario, pk=usuario_id, fecha_eliminacion__isnull=True)
         if accion == 'agregar':
             usuario.groups.add(rol)
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.USUARIO_AGREGADO_ROL,
+                resumen=f'Usuario "{usuario.username}" agregado al rol "{rol.name}"',
+                entidad='Usuario',
+                entidad_id=usuario.pk,
+                detalles={'nombre_usuario': usuario.username, 'rol': rol.name},
+            )
             messages.success(request, f'Usuario {usuario.username} agregado al rol.')
         elif accion == 'quitar':
             usuario.groups.remove(rol)
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.USUARIO_QUITADO_ROL,
+                resumen=f'Usuario "{usuario.username}" retirado del rol "{rol.name}"',
+                entidad='Usuario',
+                entidad_id=usuario.pk,
+                detalles={'nombre_usuario': usuario.username, 'rol': rol.name},
+            )
             messages.success(request, f'Usuario {usuario.username} quitado del rol.')
         return redirect('seguridad:usuarios_rol', id=id)
 
@@ -202,6 +293,13 @@ def resetear_password(request, id):
             usuario.set_password(form.cleaned_data['password1'])
             usuario.debe_cambiar_password = True
             usuario.save()
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.PASSWORD_REINICIADA,
+                resumen=f'Contraseña de "{usuario.username}" restablecida por administración',
+                entidad='Usuario',
+                entidad_id=usuario.pk,
+            )
             messages.success(
                 request,
                 f'Contraseña de {usuario.username} restablecida. '
@@ -227,5 +325,12 @@ class CambiarPasswordView(LoginRequiredMixin, PasswordChangeView):
     def form_valid(self, form):
         self.request.user.debe_cambiar_password = False
         self.request.user.save(update_fields=['debe_cambiar_password'])
+        registrar_evento(
+            usuario=self.request.user,
+            accion=EventoBitacora.Accion.PASSWORD_CAMBIADA,
+            resumen='La persona actualizó su contraseña',
+            entidad='Usuario',
+            entidad_id=self.request.user.pk,
+        )
         messages.success(self.request, 'Contraseña actualizada correctamente.')
         return super().form_valid(form)

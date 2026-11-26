@@ -2,6 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from bitacora.models import EventoBitacora
+from bitacora.servicios import registrar_evento
 from movimientos.consultas import movimientos_visibles, paginar, puede_ver_todos, resumir
 from movimientos.forms import FiltroMovimientosForm
 from movimientos.servicios import ConflictoDeVersion
@@ -38,6 +40,18 @@ def registrar_ingreso(request):
             ingreso = form.save(commit=False)
             ingreso.creado_por = request.user  # el autor siempre sale de la sesión
             ingreso.save()
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.INGRESO_CREADO,
+                resumen=f'Ingreso #{ingreso.pk}: {ingreso.concepto}',
+                entidad='Ingreso',
+                entidad_id=ingreso.pk,
+                detalles={
+                    'monto': str(ingreso.monto),
+                    'fecha': ingreso.fecha.isoformat(),
+                    'categoria': ingreso.categoria.nombre,
+                },
+            )
             messages.success(request, f'Ingreso #{ingreso.pk} registrado correctamente.')
             # Redirigir después del POST evita que "recargar" registre el ingreso dos veces
             return redirect('ingresos:detalle_ingreso', id=ingreso.pk)

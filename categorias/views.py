@@ -2,6 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from bitacora.models import EventoBitacora
+from bitacora.servicios import registrar_evento
 from .forms import CategoriaForm
 from .models import Categoria, TipoMovimiento
 
@@ -37,6 +39,14 @@ def crear_categoria(request):
         form = CategoriaForm(request.POST)
         if form.is_valid():
             categoria = form.save()
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.CATEGORIA_CREADA,
+                resumen=f'Categoría "{categoria.nombre}" creada',
+                entidad='Categoría',
+                entidad_id=categoria.pk,
+                detalles={'nombre': categoria.nombre, 'tipo': categoria.get_tipo_display()},
+            )
             messages.success(request, f'Categoría "{categoria.nombre}" creada correctamente.')
             return redirect('categorias:lista_categorias')
     else:
@@ -49,9 +59,20 @@ def crear_categoria(request):
 def editar_categoria(request, id):
     categoria = get_object_or_404(Categoria, pk=id)
     if request.method == 'POST':
+        antes = {'nombre': categoria.nombre, 'tipo': categoria.get_tipo_display()}
         form = CategoriaForm(request.POST, instance=categoria)
         if form.is_valid():
             form.save()
+            despues = {'nombre': categoria.nombre, 'tipo': categoria.get_tipo_display()}
+            if antes != despues:
+                registrar_evento(
+                    usuario=request.user,
+                    accion=EventoBitacora.Accion.CATEGORIA_EDITADA,
+                    resumen=f'Categoría "{categoria.nombre}" modificada',
+                    entidad='Categoría',
+                    entidad_id=categoria.pk,
+                    detalles={'antes': antes, 'despues': despues},
+                )
             messages.success(request, 'Categoría actualizada correctamente.')
             return redirect('categorias:lista_categorias')
     else:
@@ -76,6 +97,14 @@ def cambiar_estado_categoria(request, id, activar):
         categoria.activo = activar
         categoria.save(update_fields=['activo', 'fecha_modificacion'])
         estado = 'reactivada' if activar else 'desactivada'
+        registrar_evento(
+            usuario=request.user,
+            accion=EventoBitacora.Accion.CATEGORIA_ESTADO,
+            resumen=f'Categoría "{categoria.nombre}" {estado}',
+            entidad='Categoría',
+            entidad_id=categoria.pk,
+            detalles={'nombre': categoria.nombre, 'activa': categoria.activo},
+        )
         messages.success(request, f'Categoría "{categoria.nombre}" {estado} correctamente.')
         return redirect('categorias:lista_categorias')
 

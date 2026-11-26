@@ -2,6 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from bitacora.models import EventoBitacora
+from bitacora.servicios import registrar_evento
 from movimientos.consultas import movimientos_visibles, paginar, puede_ver_todos, resumir
 from movimientos.forms import FiltroMovimientosForm
 from movimientos.servicios import ConflictoDeVersion
@@ -38,6 +40,18 @@ def registrar_gasto(request):
             gasto = form.save(commit=False)
             gasto.creado_por = request.user  # el autor siempre sale de la sesión
             gasto.save()
+            registrar_evento(
+                usuario=request.user,
+                accion=EventoBitacora.Accion.GASTO_CREADO,
+                resumen=f'Gasto #{gasto.pk}: {gasto.concepto}',
+                entidad='Gasto',
+                entidad_id=gasto.pk,
+                detalles={
+                    'monto': str(gasto.monto),
+                    'fecha': gasto.fecha.isoformat(),
+                    'categoria': gasto.categoria.nombre,
+                },
+            )
             messages.success(request, f'Gasto #{gasto.pk} registrado correctamente.')
             # Redirigir después del POST evita que "recargar" registre el gasto dos veces
             return redirect('gastos:detalle_gasto', id=gasto.pk)

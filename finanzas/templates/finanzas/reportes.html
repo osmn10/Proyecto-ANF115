@@ -1,0 +1,56 @@
+{% extends "core/base.html" %}
+{% load l10n %}
+
+{% block titulo %}Reportes - Control de Ingresos y Gastos{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina d-flex flex-wrap justify-content-between align-items-end gap-3">
+    <div><div class="antetitulo mb-1">Consulta financiera</div><h4 class="mb-1 fw-semibold">Reportes</h4><p class="text-muted small mb-0">Filtra movimientos por fecha y categoría.</p></div>
+    <a href="{% url 'finanzas:panel_financiero' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-speedometer2 me-1"></i>Panel financiero</a>
+</div>
+<section class="card shadow-sm mb-4"><div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-sm-6 col-lg-3"><label for="desde" class="form-label">Desde</label><input id="desde" name="desde" type="date" class="form-control" value="{{ desde|date:'Y-m-d' }}" required></div>
+        <div class="col-sm-6 col-lg-3"><label for="hasta" class="form-label">Hasta</label><input id="hasta" name="hasta" type="date" class="form-control" value="{{ hasta|date:'Y-m-d' }}" required></div>
+        <div class="col-sm-6 col-lg-2"><label for="categoria" class="form-label">Categoría</label><select id="categoria" name="categoria" class="form-select"><option value="">Todas</option>
+            {% for categoria in categorias %}<option value="{{ categoria.pk }}" {% if categoria_id == categoria.pk|stringformat:"s" %}selected{% endif %}>{{ categoria.get_tipo_display }} · {{ categoria.nombre }}</option>{% endfor %}
+        </select></div>
+        <div class="col-sm-6 col-lg-2"><label for="agrupar" class="form-label">Agrupar por</label><select id="agrupar" name="agrupar" class="form-select">
+            <option value="diario" {% if agrupacion == 'diario' %}selected{% endif %}>Día</option><option value="mensual" {% if agrupacion == 'mensual' %}selected{% endif %}>Mes</option><option value="anual" {% if agrupacion == 'anual' %}selected{% endif %}>Año</option>
+        </select></div>
+        <div class="col-lg-2 d-grid gap-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Consultar</button>
+            <button class="btn btn-outline-primary btn-sm" type="submit" name="exportar" value="csv"><i class="bi bi-download me-1"></i>Descargar CSV</button>
+        </div>
+    </form>
+</div></section>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="resumen-reporte"><span>Ingresos</span><strong class="cifra text-success">&#36;{{ ingresos|floatformat:2 }}</strong></div></div>
+    <div class="col-6 col-xl-3"><div class="resumen-reporte"><span>Gastos</span><strong class="cifra text-danger">&#36;{{ gastos|floatformat:2 }}</strong></div></div>
+    <div class="col-6 col-xl-3"><div class="resumen-reporte"><span>Resultado</span><strong class="cifra {% if resultado < 0 %}text-danger{% else %}text-primary{% endif %}">&#36;{{ resultado|floatformat:2 }}</strong></div></div>
+    <div class="col-6 col-xl-3"><div class="resumen-reporte"><span>% de gastos</span><strong class="cifra">{% if porcentaje_gastos != None %}{{ porcentaje_gastos|floatformat:2 }}%{% else %}N/D{% endif %}</strong></div></div>
+</div>
+<section class="card shadow-sm mb-4">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
+        <div><h5 class="mb-0 fs-6 fw-semibold">Comparación por {{ nombre_periodo|lower }}</h5><small class="text-muted">Las barras muestran ingresos y gastos en la misma escala.</small></div>
+        <div class="d-flex gap-3 small"><span><i class="bi bi-square-fill text-success me-1"></i>Ingresos</span><span><i class="bi bi-square-fill text-danger me-1"></i>Gastos</span></div>
+    </div><div class="card-body">
+    {% if filas %}<div class="grafico-barras" role="img" aria-label="Comparación de ingresos y gastos">
+        {% for fila in filas %}<div class="grafico-fila">
+            <span class="grafico-etiqueta">{{ fila.etiqueta }}</span><div class="grafico-series">
+                <div class="grafico-linea"><div class="grafico-barra ingreso" style="width: {{ fila.ancho_ingresos|unlocalize }}%" title="Ingresos"></div></div>
+                <div class="grafico-linea"><div class="grafico-barra gasto" style="width: {{ fila.ancho_gastos|unlocalize }}%" title="Gastos"></div></div>
+            </div><span class="grafico-valor cifra">&#36;{{ fila.ingresos|floatformat:2 }}</span><span class="grafico-valor cifra text-danger">&#36;{{ fila.gastos|floatformat:2 }}</span>
+        </div>{% endfor %}
+    </div>{% else %}<div class="estado-vacio"><i class="bi bi-search fs-3 d-block mb-2"></i>No hay movimientos para los filtros seleccionados.</div>{% endif %}
+</div></section>
+<section class="card shadow-sm"><div class="card-header py-3"><h5 class="mb-0 fs-6 fw-semibold">Resumen del reporte</h5></div><div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark"><tr><th>{{ nombre_periodo }}</th><th class="text-end">Ingresos</th><th class="text-end">Gastos</th><th class="text-end">Resultado</th><th class="text-end">% gastos</th></tr></thead>
+        <tbody>{% for fila in filas %}<tr>
+            <td class="fw-medium">{{ fila.etiqueta }}</td><td class="text-end cifra text-success">&#36;{{ fila.ingresos|floatformat:2 }}</td><td class="text-end cifra text-danger">&#36;{{ fila.gastos|floatformat:2 }}</td>
+            <td class="text-end cifra">&#36;{{ fila.resultado|floatformat:2 }}</td><td class="text-end cifra">{% if fila.porcentaje_gastos != None %}{{ fila.porcentaje_gastos|floatformat:2 }}%{% else %}N/D{% endif %}</td>
+        </tr>{% empty %}<tr><td colspan="5" class="text-center text-muted py-4">Sin resultados para mostrar.</td></tr>{% endfor %}</tbody>
+        {% if filas %}<tfoot class="table-light fw-semibold"><tr><td>Total del período</td><td class="text-end cifra text-success">&#36;{{ ingresos|floatformat:2 }}</td><td class="text-end cifra text-danger">&#36;{{ gastos|floatformat:2 }}</td><td class="text-end cifra">&#36;{{ resultado|floatformat:2 }}</td><td class="text-end cifra">{% if porcentaje_gastos != None %}{{ porcentaje_gastos|floatformat:2 }}%{% else %}N/D{% endif %}</td></tr></tfoot>{% endif %}
+    </table>
+</div></section>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "core/base.html" %}
+{% load l10n %}
+
+{% block titulo %}Panel financiero - Control de Ingresos y Gastos{% endblock %}
+{% block contenido %}
+<div class="encabezado-pagina d-flex flex-wrap justify-content-between align-items-end gap-3">
+    <div><div class="antetitulo mb-1">Resumen financiero</div><h4 class="mb-1 fw-semibold">Panel financiero</h4>
+    <p class="text-muted small mb-0">Del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }} · Mes actual</p></div>
+    <a href="{% url 'finanzas:reportes' %}" class="btn btn-primary btn-sm"><i class="bi bi-bar-chart-line me-1"></i>Ver reportes</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3"><div class="card shadow-sm indicador ingreso h-100"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3"><span class="etiqueta">Ingresos</span><span class="icono"><i class="bi bi-arrow-down-left"></i></span></div>
+        <div class="valor cifra text-success">&#36;{{ ingresos|floatformat:2 }}</div><small class="text-muted">En el período seleccionado</small>
+    </div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card shadow-sm indicador gasto h-100"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3"><span class="etiqueta">Gastos</span><span class="icono"><i class="bi bi-arrow-up-right"></i></span></div>
+        <div class="valor cifra text-danger">&#36;{{ gastos|floatformat:2 }}</div><small class="text-muted">En el período seleccionado</small>
+    </div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card shadow-sm indicador resultado h-100"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3"><span class="etiqueta">Resultado financiero</span><span class="icono"><i class="bi bi-calculator"></i></span></div>
+        <div class="valor cifra {% if resultado < 0 %}text-danger{% else %}text-primary{% endif %}">&#36;{{ resultado|floatformat:2 }}</div><small class="text-muted">Ingresos menos gastos</small>
+    </div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card shadow-sm indicador porcentaje h-100"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3"><span class="etiqueta">% de gastos</span><span class="icono"><i class="bi bi-percent"></i></span></div>
+        {% if porcentaje_gastos != None %}<div class="valor cifra">{{ porcentaje_gastos|floatformat:2 }}%</div><small class="text-muted">Gastos respecto a ingresos</small>
+        {% else %}<div class="valor cifra fs-5">N/D</div><small class="text-muted">Sin ingresos en el período</small>{% endif %}
+    </div></div></div>
+</div>
+<div class="row g-3">
+    <div class="col-xl-8"><section class="card shadow-sm h-100">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
+            <div><h5 class="mb-0 fs-6 fw-semibold">Ingresos y gastos del mes</h5><small class="text-muted">Proporción de cada tipo sobre el total registrado</small></div>
+        </div><div class="card-body d-flex flex-wrap align-items-center justify-content-center gap-4 gap-lg-5">
+        {% if total_movimientos %}
+        <div class="grafico-pastel" role="img" aria-label="Ingresos: {{ porcentaje_ingresos_grafico|floatformat:1 }} por ciento. Gastos: {{ porcentaje_gastos_grafico|floatformat:1 }} por ciento."
+             style="background: conic-gradient(var(--ig-ingreso) 0% {{ porcentaje_ingresos_grafico|unlocalize }}%, var(--ig-gasto) {{ porcentaje_ingresos_grafico|unlocalize }}% 100%);"></div>
+        <div class="grafico-pastel-leyenda">
+            <div class="grafico-pastel-item">
+                <span class="grafico-pastel-color ingreso"></span>
+                <span><strong>Ingresos</strong><small class="d-block text-muted">{{ porcentaje_ingresos_grafico|floatformat:1 }}% del total</small></span>
+                <span class="cifra ms-auto">&#36;{{ ingresos|floatformat:2 }}</span>
+            </div>
+            <div class="grafico-pastel-item">
+                <span class="grafico-pastel-color gasto"></span>
+                <span><strong>Gastos</strong><small class="d-block text-muted">{{ porcentaje_gastos_grafico|floatformat:1 }}% del total</small></span>
+                <span class="cifra ms-auto">&#36;{{ gastos|floatformat:2 }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="estado-vacio"><i class="bi bi-pie-chart fs-3 d-block mb-2"></i>Aún no hay movimientos en este mes.</div>
+        {% endif %}
+    </div></section></div>
+    <div class="col-xl-4"><section class="card shadow-sm h-100">
+        <div class="card-header py-3"><h5 class="mb-0 fs-6 fw-semibold">Movimientos por categoría</h5><small class="text-muted">Principales categorías del mes</small></div><div class="card-body">
+        {% if categorias_grafico %}<div class="d-flex flex-column gap-3">{% for item in categorias_grafico %}<div>
+            <div class="d-flex justify-content-between gap-2 small mb-1"><span class="text-truncate">{{ item.categoria__nombre }} <span class="text-muted">· {{ item.tipo|lower|capfirst }}</span></span><span class="cifra">&#36;{{ item.total|floatformat:2 }}</span></div>
+            <div class="progress grafico-categoria" role="img" aria-label="{{ item.categoria__nombre }}"><div class="progress-bar {% if item.tipo == 'INGRESO' %}bg-success{% else %}bg-danger{% endif %}" style="width: {{ item.ancho|unlocalize }}%"></div></div>
+        </div>{% endfor %}</div>{% else %}<div class="estado-vacio"><i class="bi bi-tags fs-3 d-block mb-2"></i>Sin datos para mostrar.</div>{% endif %}
+    </div></section></div>
+</div>
+<div class="alert alert-light border mt-3 mb-0 small"><i class="bi bi-info-circle me-1 text-primary"></i>El resultado es ingresos menos gastos registrados. No representa utilidad contable ni saldo de caja o banco.</div>
+{% endblock %}
