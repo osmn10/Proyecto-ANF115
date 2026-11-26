@@ -101,6 +101,7 @@ class CategoriaVistasTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        Categoria.objects.all().delete()  # estas pruebas no dependen de las categorias predeterminadas
         # Rol con los tres permisos del modulo (como se configuraria en Roles)
         rol_admin = Group.objects.create(name='Administrador prueba')
         rol_admin.permissions.set(Permission.objects.filter(content_type__app_label='categorias'))

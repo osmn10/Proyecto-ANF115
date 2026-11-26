@@ -34,6 +34,7 @@ class IngresosTestCase(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        Categoria.objects.all().delete()  # estas pruebas no dependen de las categorias predeterminadas
         rol_empleado = Group.objects.create(name='Empleado prueba')
         rol_empleado.permissions.set(Permission.objects.filter(
             content_type__app_label='ingresos', codename__in=['add_ingreso', 'view_ingreso']))
