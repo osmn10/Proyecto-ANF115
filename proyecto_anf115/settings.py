@@ -8,10 +8,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
+# Render define la variable RENDER=true en sus servicios
+EN_RENDER = env.bool('RENDER', default=False)
+
 # Seguridad
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+
+# En Render, el servicio recibe su direccion publica (xxx.onrender.com) en esta variable
+RENDER_EXTERNAL_HOSTNAME = env('RENDER_EXTERNAL_HOSTNAME', default='')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+
+if EN_RENDER:
+    # Render termina el HTTPS en su proxy y reenvia la peticion por HTTP interno
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -36,6 +52,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # sirve los archivos estaticos en produccion
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -65,13 +82,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'proyecto_anf115.wsgi.application'
 
 
-# Base de datos
+# Base de datos: SQLite en local; en Render se define DATABASE_URL (PostgreSQL)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
 }
+DATABASES['default']['CONN_MAX_AGE'] = 600
 
 
 # Validacion de contrasenas
@@ -106,6 +121,24 @@ FORMAT_MODULE_PATH = ['proyecto_anf115.formatos']
 
 # Archivos estaticos
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # destino de "collectstatic" (ignorada en git)
+
+if EN_RENDER:
+    # Comprime y agrega un hash al nombre de cada archivo para que el navegador lo cachee bien.
+    # Solo en Render: requiere haber ejecutado "collectstatic" (lo hace build.sh).
+    STORAGES = {
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+    }
+
+    # Que los errores 500 (con su detalle) aparezcan en los logs de Render
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {'console': {'class': 'logging.StreamHandler'}},
+        'root': {'handlers': ['console'], 'level': 'WARNING'},
+    }
+
 
 # Modelo de usuario personalizado
 AUTH_USER_MODEL = 'seguridad.Usuario'
