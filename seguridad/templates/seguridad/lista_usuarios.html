@@ -58,7 +58,7 @@
             </thead>
             <tbody id="tabla-cuerpo">
                 {% for usuario in usuarios %}
-                <tr data-search="{{ usuario.username }} {{ usuario.first_name }} {{ usuario.last_name }}">
+                    <tr data-search="{{ usuario.username }} {{ usuario.first_name }} {{ usuario.last_name }}"{% if usuario.eliminado %} class="text-muted"{% endif %}>
                     <td>
                         <a href="{% url 'seguridad:detalle_usuario' usuario.id %}" class="text-decoration-none fw-medium">
                             {{ usuario.username }}
@@ -74,7 +74,11 @@
                         {% endfor %}
                     </td>
                     <td>
-                        {% if usuario.is_active %}
+                        {% if usuario.eliminado %}
+                            <span class="badge bg-dark-subtle text-dark border border-dark-subtle" title="Eliminado el {{ usuario.fecha_eliminacion|date:'d/m/Y H:i' }}">
+                                <i class="bi bi-person-x"></i> Eliminado
+                            </span>
+                        {% elif usuario.is_active %}
                             <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
                         {% else %}
                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactivo</span>
@@ -84,6 +88,7 @@
                         {{ usuario.last_login|date:"d/m/Y H:i"|default:"—" }}
                     </td>
                     <td class="text-end">
+                        {% if not usuario.eliminado %}
                         {% if perms.seguridad.change_usuario %}
                         <a href="{% url 'seguridad:editar_usuario' usuario.id %}" class="btn btn-sm btn-outline-primary me-1" title="Editar">
                             <i class="bi bi-pencil"></i>
@@ -99,6 +104,7 @@
                                 title="Eliminar">
                             <i class="bi bi-trash"></i>
                         </button>
+                        {% endif %}
                         {% endif %}
                     </td>
                 </tr>

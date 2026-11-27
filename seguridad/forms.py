@@ -5,7 +5,7 @@ from django import forms
 from .models import Usuario
 
 
-APPS_NEGOCIO = ['seguridad']
+APPS_NEGOCIO = ['seguridad', 'categorias', 'ingresos', 'gastos', 'bitacora']
 
 
 class RolForm(forms.ModelForm):
@@ -27,7 +27,23 @@ class RolForm(forms.ModelForm):
         }
 
 
-class UsuarioCrearForm(UserCreationForm):
+MENSAJE_NOMBRE_RESERVADO = (
+    'Este nombre de usuario perteneció a una cuenta eliminada y no puede reutilizarse.'
+)
+
+
+class NombreReservadoMixin:
+    """Impide reutilizar el nombre de un usuario eliminado (sin distinguir mayúsculas)."""
+
+    def validar_nombre_no_reservado(self, username):
+        eliminados = Usuario.objects.filter(username__iexact=username, fecha_eliminacion__isnull=False)
+        if self.instance.pk:
+            eliminados = eliminados.exclude(pk=self.instance.pk)
+        if username and eliminados.exists():
+            raise forms.ValidationError(MENSAJE_NOMBRE_RESERVADO)
+
+
+class UsuarioCrearForm(NombreReservadoMixin, UserCreationForm):
     groups = forms.ModelMultipleChoiceField(
         queryset=Group.objects.all(),
         required=False,
@@ -45,6 +61,10 @@ class UsuarioCrearForm(UserCreationForm):
             'email': 'Correo electrónico',
             'is_active': 'Usuario activo',
         }
+
+    def clean_username(self):
+        self.validar_nombre_no_reservado(self.cleaned_data.get('username'))
+        return super().clean_username()
 
 
 class ResetearPasswordForm(forms.Form):
@@ -65,7 +85,7 @@ class ResetearPasswordForm(forms.Form):
         return cleaned_data
 
 
-class UsuarioEditarForm(forms.ModelForm):
+class UsuarioEditarForm(NombreReservadoMixin, forms.ModelForm):
     groups = forms.ModelMultipleChoiceField(
         queryset=Group.objects.all(),
         required=False,
@@ -83,3 +103,8 @@ class UsuarioEditarForm(forms.ModelForm):
             'email': 'Correo electrónico',
             'is_active': 'Usuario activo',
         }
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        self.validar_nombre_no_reservado(username)
+        return username

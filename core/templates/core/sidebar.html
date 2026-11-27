@@ -30,8 +30,67 @@
                 </a>
             </li>
 
+            {# Seccion Finanzas: solo se muestra si tiene acceso a al menos un item #}
+             {% if perms.ingresos.view_ingreso or perms.gastos.view_gasto or perms.categorias.view_categoria %}
+            <li class="sidebar-seccion mt-3 mb-1 px-3">
+                <span class="text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.08em; color: rgba(255,255,255,0.35);">Finanzas</span>
+            </li>
+
+            {% if perms.ingresos.view_ingreso %}
+            <li class="nav-item">
+                <a href="{% url 'ingresos:lista_ingresos' %}"
+                   class="nav-link sidebar-link{% if '/ingresos/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
+                   title="Ingresos">
+                    <i class="bi bi-arrow-down-circle flex-shrink-0"></i>
+                    <span class="sidebar-label">Ingresos</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if perms.gastos.view_gasto %}
+            <li class="nav-item">
+                <a href="{% url 'gastos:lista_gastos' %}"
+                   class="nav-link sidebar-link{% if '/gastos/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
+                   title="Gastos">
+                    <i class="bi bi-arrow-up-circle flex-shrink-0"></i>
+                    <span class="sidebar-label">Gastos</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if perms.categorias.view_categoria %}
+            <li class="nav-item">
+                <a href="{% url 'categorias:lista_categorias' %}"
+                   class="nav-link sidebar-link{% if '/categorias/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
+                   title="Categorías">
+                    <i class="bi bi-tags flex-shrink-0"></i>
+                    <span class="sidebar-label">Categorías</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if perms.ingresos.view_ingreso and perms.gastos.view_gasto %}
+            <li class="nav-item">
+                <a href="{% url 'finanzas:panel_financiero' %}"
+                   class="nav-link sidebar-link{% if '/finanzas/panel/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
+                   title="Panel financiero">
+                    <i class="bi bi-speedometer2 flex-shrink-0"></i>
+                    <span class="sidebar-label">Panel financiero</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'finanzas:reportes' %}"
+                   class="nav-link sidebar-link{% if '/finanzas/reportes/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
+                   title="Reportes">
+                    <i class="bi bi-bar-chart-line flex-shrink-0"></i>
+                    <span class="sidebar-label">Reportes</span>
+                </a>
+            </li>
+            {% endif %}
+            {% endif %}
+            
             {# Seccion Seguridad: solo se muestra si tiene acceso a al menos un item #}
-            {% if perms.seguridad.view_usuario or perms.auth.view_group %}
+            {% if perms.seguridad.view_usuario or perms.auth.view_group or perms.bitacora.view_eventobitacora %}
             <li class="sidebar-seccion mt-3 mb-1 px-3">
                 <span class="text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.08em; color: rgba(255,255,255,0.35);">Seguridad</span>
             </li>
@@ -54,6 +113,17 @@
                    title="Roles">
                     <i class="bi bi-shield-lock flex-shrink-0"></i>
                     <span class="sidebar-label">Roles</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if perms.bitacora.view_eventobitacora %}
+            <li class="nav-item">
+                <a href="{% url 'bitacora:lista_eventos' %}"
+                   class="nav-link sidebar-link{% if '/bitacora/' in request.path %} active{% endif %} d-flex align-items-center gap-2 rounded px-3 py-2"
+                   title="Bitácora">
+                    <i class="bi bi-journal-check flex-shrink-0"></i>
+                    <span class="sidebar-label">Bitácora</span>
                 </a>
             </li>
             {% endif %}

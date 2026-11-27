@@ -1,0 +1,128 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}Gasto #{{ gasto.pk }} - Control de Ingresos y Gastos{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-center">
+<div style="width: 100%; max-width: 760px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 fw-semibold d-flex align-items-center gap-2">
+            Gasto #{{ gasto.pk }}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 fw-medium">
+                <i class="bi bi-arrow-up-right"></i> Gasto
+            </span>
+        </h4>
+        <div class="d-flex gap-2">
+            {% if perms.gastos.change_gasto %}
+            <a href="{% url 'gastos:corregir_gasto' gasto.pk %}" class="btn btn-outline-warning btn-sm d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square"></i> Corregir
+            </a>
+            {% endif %}
+            {% if perms.gastos.add_gasto %}
+            <a href="{% url 'gastos:registrar_gasto' %}" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2">
+                <i class="bi bi-plus-lg"></i> Registrar otro
+            </a>
+            {% endif %}
+            <a href="{% url 'gastos:lista_gastos' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-borderless mb-0">
+                <tbody>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4" style="width: 35%;">Concepto</td>
+                        <td class="fw-medium">{{ gasto.concepto }}</td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Monto</td>
+                        <td class="fw-semibold fs-5" style="color: var(--ig-gasto);">${{ gasto.monto|floatformat:"2g" }}</td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Fecha del pago</td>
+                        <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Categoría</td>
+                        <td>
+                            {{ gasto.categoria.nombre }}
+                            {% if not gasto.categoria.activo %}
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1">Inactiva</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Registrado por</td>
+                        <td>
+                            {{ gasto.creado_por.username }}
+                            {% if gasto.creado_por.eliminado %}
+                                <span class="badge bg-dark-subtle text-dark border border-dark-subtle ms-1"><i class="bi bi-person-x"></i> Eliminado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="border-bottom">
+                        <td class="text-muted ps-4">Fecha de registro</td>
+                        <td class="text-muted">{{ gasto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted ps-4">Versión</td>
+                        <td class="text-muted">
+                            {{ gasto.version }}
+                            {% if gasto.version > 1 %}<small>(corregido el {{ gasto.fecha_modificacion|date:"d/m/Y H:i" }})</small>{% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if perms.gastos.change_gasto %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history"></i> Historial de correcciones
+        </div>
+        {% if correcciones %}
+        <ul class="list-group list-group-flush">
+            {% for correccion in correcciones %}
+            <li class="list-group-item px-4 py-3">
+                <div class="d-flex justify-content-between flex-wrap gap-1 mb-2">
+                    <span class="fw-medium">
+                        Versión {{ correccion.version_anterior }} → {{ correccion.version_nueva }}
+                    </span>
+                    <small class="text-muted">
+                        {{ correccion.realizado_por.username }}
+                        {% if correccion.realizado_por.eliminado %}<i class="bi bi-person-x" title="Usuario eliminado"></i>{% endif %}
+                        · {{ correccion.fecha_creacion|date:"d/m/Y H:i" }}
+                    </small>
+                </div>
+                <div class="small mb-2"><span class="text-muted">Motivo:</span> {{ correccion.motivo }}</div>
+                <table class="table table-sm table-borderless small mb-0">
+                    <tbody>
+                        {% for campo, antes, despues in correccion.cambios %}
+                        <tr>
+                            <td class="text-muted ps-0" style="width: 25%;">{{ campo }}</td>
+                            <td class="text-decoration-line-through text-muted">{{ antes }}</td>
+                            <td style="width: 24px;"><i class="bi bi-arrow-right"></i></td>
+                            <td class="fw-medium">{{ despues }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="card-body text-muted small">Este gasto no ha sido corregido.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+</div>
+
+{% endblock %}

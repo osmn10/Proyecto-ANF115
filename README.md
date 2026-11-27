@@ -17,9 +17,9 @@ Centralizar los registros de ingresos y gastos para evitar errores, pérdida de 
 | Módulo | Responsabilidad | Estado |
 |--------|-----------------|--------|
 | M1 Usuarios | Crear, consultar, modificar y desactivar cuentas. | Base en app `seguridad` |
-| M2 Ingresos | Registrar y consultar entradas; corregirlas con autorización. | Pendiente |
-| M3 Gastos | Registrar y consultar salidas; corregirlas con autorización. | Pendiente |
-| M4 Categorías | Clasificar los movimientos en categorías de ingreso o de gasto. | Pendiente |
+| M2 Ingresos | Registrar y consultar entradas; corregirlas con autorización. | Disponible |
+| M3 Gastos | Registrar y consultar salidas; corregirlas con autorización. | Disponible |
+| M4 Categorías | Clasificar los movimientos en categorías de ingreso o de gasto. | Disponible |
 | M5 Panel financiero | Totales, resultado y comparación gráfica del período. | Pendiente |
 | M6 Reportes | Reportes diarios, mensuales y anuales con filtros por fecha y categoría. | Pendiente |
 | M7 Seguridad y bitácora | Control de acceso y registro de las acciones relevantes. | Acceso en `seguridad`; bitácora pendiente |

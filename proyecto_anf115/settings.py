@@ -26,6 +26,12 @@ INSTALLED_APPS = [
     # Apps del proyecto
     'core',
     'seguridad',
+    'categorias',
+    'movimientos',
+    'ingresos',
+    'gastos',
+    'finanzas',
+    'bitacora',
 ]
 
 MIDDLEWARE = [
@@ -93,6 +99,9 @@ TIME_ZONE = 'America/El_Salvador'
 USE_I18N = True
 
 USE_TZ = True
+
+# Formato numerico propio: miles con coma y decimales con punto (1,234.56)
+FORMAT_MODULE_PATH = ['proyecto_anf115.formatos']
 
 
 # Archivos estaticos

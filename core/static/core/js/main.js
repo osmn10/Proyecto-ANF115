@@ -137,6 +137,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     ' usuario' + (usuarios !== 1 ? 's' : '') +
                     ' asignados. Seran desvinculados del rol.';
                 avisoEl.style.display = '';
+            } else if (tipo === 'usuario') {
+                avisoEl.textContent = 'La cuenta quedara bloqueada y marcada como eliminada. ' +
+                    'Sus registros se conservan.';
+                avisoEl.style.display = '';
             } else {
                 avisoEl.style.display = 'none';
             }

@@ -1,0 +1,75 @@
+{% extends "core/base.html" %}
+
+{% block titulo %}{{ accion }} categoría - Control de Ingresos y Gastos{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0 fw-semibold">{{ accion }} categoría</h4>
+    <a href="{% url 'categorias:lista_categorias' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="card shadow-sm mx-auto" style="max-width: 560px;">
+    <div class="card-body p-4">
+
+        {# Aqui aparece, por ejemplo, el error de nombre duplicado #}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="{{ form.nombre.id_for_label }}" class="form-label">{{ form.nombre.label }}</label>
+                <input type="text"
+                       name="{{ form.nombre.html_name }}"
+                       id="{{ form.nombre.id_for_label }}"
+                       maxlength="{{ form.nombre.field.max_length }}"
+                       class="form-control {% if form.nombre.errors %}is-invalid{% endif %}"
+                       value="{{ form.nombre.value|default:'' }}"
+                       placeholder="Ej: Alquiler, Ventas de contado"
+                       required>
+                {% for error in form.nombre.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="mb-4">
+                <label for="{{ form.tipo.id_for_label }}" class="form-label">{{ form.tipo.label }}</label>
+                <select name="{{ form.tipo.html_name }}"
+                        id="{{ form.tipo.id_for_label }}"
+                        class="form-select {% if form.tipo.errors %}is-invalid{% endif %}"
+                        {% if form.tipo_bloqueado %}disabled{% else %}required{% endif %}>
+                    {% for valor, etiqueta in form.tipo.field.choices %}
+                    <option value="{{ valor }}" {% if form.tipo.value == valor %}selected{% endif %}>
+                        {% if valor %}{{ etiqueta }}{% else %}Selecciona un tipo{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% for error in form.tipo.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+                {% if form.tipo_bloqueado %}
+                <div class="form-text">
+                    <i class="bi bi-lock me-1"></i>El tipo no se puede cambiar porque la categoría ya clasifica movimientos.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+                    <i class="bi bi-check-lg"></i> {% if accion == 'Crear' %}Crear{% else %}Guardar cambios{% endif %}
+                </button>
+                <a href="{% url 'categorias:lista_categorias' %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}
